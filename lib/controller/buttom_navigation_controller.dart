@@ -1,9 +1,10 @@
 import 'package:get/get.dart';
 
 class BottomNavController extends GetxController {
-  var selectedIndex = 0.obs;
+  int selectedIndex = 0; // ✅ Change from Rx<int> to normal int
 
   void changeTab(int index) {
-    selectedIndex.value = index;
+    selectedIndex = index;
+    update(); // ✅ Use `update()` instead of `.value`
   }
 }
