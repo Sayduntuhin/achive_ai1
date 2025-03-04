@@ -1,6 +1,8 @@
 import 'package:achive_ai/themes/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import '../widgets/custom_slide_button.dart';
 
 class AiBoostScreen extends StatelessWidget {
@@ -53,7 +55,8 @@ class AiBoostScreen extends StatelessWidget {
                 child: CustomSlideButton(
                   onSlideComplete: () {
                     /// Navigate to the next screen when slide is complete
-                    Navigator.pushReplacementNamed(context, "/welcome");
+                    Get.offNamed('/welcome');
+
                   },
                 ),
               ),

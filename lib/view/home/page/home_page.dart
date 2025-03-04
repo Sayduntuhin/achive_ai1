@@ -8,16 +8,18 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColorMain,
       body: CustomScrollView(
         slivers: [
           /// ✅ SliverAppBar with Header (Pinned)
           SliverAppBar(
             title: _buildHeader(),
             backgroundColor: backgroundColor,
-            expandedHeight: 70.h, // Adjust height for styling
-          //  floating: false,
-            pinned: true, // ✅ Keeps header visible at all times
+            expandedHeight: 0.08.sh,
+            // Adjust height for styling
+            floating: false,
+            pinned: true,
+            // ✅ Keeps header visible at all times
             automaticallyImplyLeading: false, // Removes default back button
           ),
 
@@ -53,40 +55,82 @@ class HomePage extends StatelessWidget {
 
   /// ✅ Header inside AppBar (Always Visible)
   Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            CircleAvatar(
-              backgroundImage: AssetImage("assets/images/person.png"), // ✅ Add user image
-              radius: 20.w,
-            ),
-            SizedBox(width: 10.w),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 5.h),
-                Text(
-                  "Hello Joshitha",
-                  style: TextStyle(fontSize: 16.sp, color: textColor, fontWeight: FontWeight.w700,fontFamily: 'Philosopher'),
+    return Padding(
+      padding: EdgeInsets.only(top: 0.01.sh),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          /// ✅ Profile Section
+          CircleAvatar(
+            backgroundImage: AssetImage("assets/images/person.png"),
+            radius: 20.w, // ✅ User Profile Image
+          ),
+          SizedBox(width: 10.w),
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Hello Joshitha",
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: textColor,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Philosopher',
                 ),
-                Text(
-                  "I am worth of love and respect",
-                  style: TextStyle(fontSize: 12.sp, color: Colors.white70,fontFamily: 'Poppins'),
+              ),
+              Text(
+                "I am worth of love and respect",
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.white70,
+                  fontFamily: 'Poppins',
                 ),
-              ],
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Icon(Icons.bolt, color: Colors.orangeAccent, size: 24.sp), // ⚡ Icon
-            SizedBox(width: 10.w),
-            Icon(Icons.notifications_none_outlined   , color: Colors.white, size: 24.sp), // 🔔 Icon
-          ],
-        ),
-      ],
+              ),
+            ],
+          ),
+          Spacer(),
+
+          /// ✅ Icons (Lightning & Notification with Badge)
+          Icon(Icons.bolt, color: buttonColor, size: 30.sp), // ⚡ Icon
+
+          /// ✅ Notification Icon with Badge
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(Icons.notifications_none_outlined,
+                  color: Colors.white, size: 30.sp), // 🔔 Icon
+
+              /// ✅ Notification Badge
+              Positioned(
+                right: -1, // Adjust position
+                top: -4,
+                child: Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: BoxDecoration(
+                    color: Colors.red, // Notification Badge Color
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: BoxConstraints(
+                    minWidth: 15.w,
+                    minHeight: 15.w,
+                  ),
+                  child: Center(
+                    child: Text(
+                      "3", // ✅ Dynamic Notification Count
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -109,13 +153,16 @@ class HomePage extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.orangeAccent : Colors.transparent,
+                  color: isSelected ? buttonColor : Colors.transparent,
                   shape: BoxShape.circle,
-                  border: Border.all(color: isSelected ? Colors.orangeAccent : Colors.white70),
+                  border: Border.all(
+                      color: isSelected ? buttonColor : Colors.white70),
                 ),
                 child: Text(
                   "${16 + index}",
-                  style: TextStyle(color: isSelected ? Colors.white : Colors.white70, fontSize: 14.sp),
+                  style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white70,
+                      fontSize: 14.sp),
                 ),
               ),
             ],
@@ -130,7 +177,12 @@ class HomePage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Daily Goals", style: TextStyle(fontSize: 24.sp, color: textColor , fontWeight: FontWeight.w700,fontFamily: 'Philosopher')),
+        Text("Daily Goals",
+            style: TextStyle(
+                fontSize: 24.sp,
+                color: textColor,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Philosopher')),
         SizedBox(height: 10.h),
         _buildGoalCard("Daily Meditation", 70),
         _buildGoalCard("Daily Workout", 50),
@@ -139,29 +191,75 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildGoalCard(String title, double progress) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      margin: EdgeInsets.only(bottom: 10.h),
-      decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(12.r)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: TextStyle(fontSize: 14.sp, color: Colors.white)),
-          SizedBox(height: 8.h),
-          LinearProgressIndicator(
-            value: progress / 100,
-            backgroundColor: Colors.white30,
-            color: Colors.orange,
-            minHeight: 6.h,
+  Widget _buildGoalCard(String title, double initialProgress) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        double progress = initialProgress;
+        return Container(
+          padding: EdgeInsets.all(16.w),
+          margin: EdgeInsets.only(bottom: 10.h),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(12.r),
           ),
-          SizedBox(height: 8.h),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text("${progress.toInt()}%", style: TextStyle(color: Colors.white)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                        fontSize: 20.sp,
+                        color: Colors.white,
+                        fontFamily: 'Philosopher'),
+                  ),
+                  Spacer(),
+                  Text(
+                    "${progress.toInt()}%",
+                    style: TextStyle(
+                        color: textColor,
+                        fontSize: 16.sp,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+              Text(
+                "30 Days",
+                style: TextStyle(
+                    fontSize: 10.sp,
+                    color: const Color(0xffAAAAAA),
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w400),
+              ),
+              SizedBox(height: 8.h),
+
+              /// ✅ Slider instead of LinearProgressIndicator
+              LinearProgressIndicator(
+                borderRadius: BorderRadius.circular(10.r),
+                value: progress / 100,
+                backgroundColor: Colors.white30,
+                color: titleColor,
+                minHeight: 8.h,
+              ),
+              // Slider(value: progress, onChanged: (value) {}),
+              /* Slider(
+                value: progress,
+                min: 0,
+                max: 100,
+                activeColor: titleColor,
+                inactiveColor: Colors.white30,
+                onChanged: (value) {
+                  setState(() {
+                    progress = value;
+                  });
+                },
+              ),*/
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -170,7 +268,12 @@ class HomePage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("AI Daily Task", style: TextStyle(fontSize: 16.sp, color: Colors.black, fontWeight: FontWeight.bold)),
+        Text("AI Daily Task",
+            style: TextStyle(
+                fontSize: 24.sp,
+                color: textColor,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Philosopher')),
         SizedBox(height: 10.h),
         _buildTaskItem("Breakfast", "08:00 AM"),
         _buildTaskItem("Workout", "06:00 PM"),
@@ -183,24 +286,38 @@ class HomePage extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
       margin: EdgeInsets.only(bottom: 8.h),
-      decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(12.r)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            spreadRadius: 1,
+            blurRadius: 2,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              Icon(Icons.radio_button_checked, color: Colors.orangeAccent, size: 18.sp),
+              Icon(Icons.radio_button_checked,
+                  color: Colors.orangeAccent, size: 18.sp),
               SizedBox(width: 10.w),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: TextStyle(fontSize: 14.sp, color: Colors.black)),
-                  Text(time, style: TextStyle(fontSize: 12.sp, color: Colors.black54)),
+                  Text(title,
+                      style: TextStyle(fontSize: 14.sp, color: Colors.black)),
+                  Text(time,
+                      style: TextStyle(fontSize: 12.sp, color: Colors.black54)),
                 ],
               ),
             ],
           ),
-          Icon(Icons.more_vert, color: Colors.black),
+          Icon(Icons.more_horiz, color: Colors.black),
         ],
       ),
     );
@@ -216,18 +333,19 @@ class _SliverDateSelectorDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   double get minExtent => height;
+
   @override
   double get maxExtent => height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Material(
       color: backgroundColor,
       elevation: shrinkOffset > 0 ? 2.0 : 0.0,
       child: child,
     );
   }
-
   @override
   bool shouldRebuild(_SliverDateSelectorDelegate oldDelegate) => false;
 }

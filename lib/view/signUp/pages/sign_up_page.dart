@@ -17,7 +17,7 @@ class SignUpScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 30.h),
+            padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 30.h),
             child: Column(
               children: [
                 /// *** App Logo ***
@@ -75,7 +75,7 @@ class SignUpScreen extends StatelessWidget {
                                   fontFamily: "Poppins",
                                   color:textColor,
                                   fontSize: 10.sp,
-                                  fontWeight: FontWeight.bold),
+                                  fontWeight: FontWeight.w400),
                             ),
                             TextSpan(
                               text: " and ",
@@ -89,7 +89,7 @@ class SignUpScreen extends StatelessWidget {
                                   fontFamily: "Poppins",
                                   color: textColor,
                                   fontSize: 10.sp,
-                                  fontWeight: FontWeight.bold),
+                                  fontWeight: FontWeight.w400),
                             ),
                           ],
                         ),

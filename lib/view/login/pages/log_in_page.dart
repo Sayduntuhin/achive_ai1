@@ -2,8 +2,11 @@ import 'package:achive_ai/themes/colors.dart';
 import 'package:achive_ai/view/widgets/app_logo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_textfield.dart';
+import '../../widgets/custom_loading_indicator.dart';
+import '../../widgets/snackbar_helper.dart';
 
 class LogInScreen extends StatelessWidget {
   const LogInScreen({super.key});
@@ -11,25 +14,23 @@ class LogInScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor, // Background color
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 30.h),
+            padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 30.h),
             child: Column(
               children: [
                 /// *** App Logo ***
                 SizedBox(height: 0.05.sh),
                 AppLogo(),
-
                 SizedBox(height: 0.1.sh),
-
-                /// *** LogIN Card ***
+                /// *** LogIn Card ***
                 Container(
                   padding:
-                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 25.h),
+                  EdgeInsets.symmetric(horizontal: 20.w, vertical: 25.h),
                   decoration: BoxDecoration(
-                    color: backgroundColor2, // Card background color
+                    color: backgroundColor2,
                     borderRadius: BorderRadius.circular(15.r),
                     border: Border.all(color: borderColor, width: 1),
                   ),
@@ -46,13 +47,10 @@ class LogInScreen extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-
                       SizedBox(height: 20.h),
-
                       /// *** Email Field ***
                       buildTextField("E-mail or Mobile Number"),
                       SizedBox(height: 10.h),
-
                       /// *** Password Field ***
                       buildTextField("Password", isPassword: true),
                       Row(
@@ -60,14 +58,13 @@ class LogInScreen extends StatelessWidget {
                           Spacer(),
                           TextButton(
                               onPressed: () {
-                                Navigator.pushReplacementNamed(
-                                    context, '/forgetPassword');
+                                Get.toNamed('/forgetPassword');
                               },
                               style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
                                   minimumSize: Size(50, 30),
                                   tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
+                                  MaterialTapTargetSize.shrinkWrap,
                                   alignment: Alignment.centerLeft),
                               child: Text(
                                 "Forgot Password?",
@@ -82,19 +79,29 @@ class LogInScreen extends StatelessWidget {
                       SizedBox(
                         height: 0.03.sh,
                       ),
-
                       /// *** Sign-Up Button ***
                       CustomButton(
                         text: "Log In",
-                        backgroundColor: buttonColor, // Pass any color
+                        backgroundColor: buttonColor,
                         onPressed: () {
-                          Navigator.pushNamedAndRemoveUntil(context, '/mainPage',(route) =>
-                          false);
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Dialog(
+                                backgroundColor: Colors.transparent,
+                                child: CustomLoadingIndicator(),
+                              );
+                            },
+                          );
+                          // Simulate a login process
+                          Future.delayed(Duration(seconds: 2), () {
+                            Get.back();
+                            SnackbarHelper.showSuccessSnackbar('Login Successful');
+                            Get.offAllNamed('/mainPage');
+                          });
                         },
                       ),
-
                       SizedBox(height: 15.h),
-
                       /// *** Already have an account? Sign In ***
                       Center(
                         child: Text.rich(
@@ -109,17 +116,13 @@ class LogInScreen extends StatelessWidget {
                               WidgetSpan(
                                 child: GestureDetector(
                                   onTap: () {
-                                    Navigator.pushNamedAndRemoveUntil(
-                                        context,
-                                        '/signUp',
-                                        (route) =>
-                                            false); // ✅ Navigate to sign-up page
+                                    Get.offAllNamed('/signUp');
                                   },
                                   child: Text(
                                     "Sign Up",
                                     style: TextStyle(
                                       fontFamily: "Poppins",
-                                      color: Colors.orangeAccent,
+                                      color: textColor,
                                       fontSize: 11.sp,
                                       fontWeight: FontWeight.bold,
                                     ),

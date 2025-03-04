@@ -128,7 +128,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   text: "Otp Verified",
                   backgroundColor: buttonColor,
                   onPressed: () {
-                    Navigator.pushNamed(context, "/resetPassword");
+      /*              Navigator.pushNamed(context, "/resetPassword");*/
+                    Get.toNamed('/resetPassword');
                   },
                 ),
 

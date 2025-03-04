@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controller/buttom_navigation_controller.dart';
+import '../../../themes/colors.dart';
 import '../../home/page/home_page.dart';
+import '../../setting/pages/setting_page.dart';
 import '../widgets/custom_navigation_bar.dart';
 
 
@@ -13,7 +15,7 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColorMain,
       /// ✅ Wrap `Scaffold` in GetBuilder to ensure updates
       body: GetBuilder<BottomNavController>(
         builder: (controller) {
@@ -36,7 +38,7 @@ class MainScreen extends StatelessWidget {
       case 2:
         return HomePage(); // Replace with Profile Page
       case 3:
-        return HomePage();
+        return SettingsScreen();
       default:
         return HomePage();
     }

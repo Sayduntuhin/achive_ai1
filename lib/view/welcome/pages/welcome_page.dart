@@ -2,6 +2,8 @@ import 'package:achive_ai/themes/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 
 import '../../widgets/custom_button.dart';
 
@@ -48,7 +50,7 @@ class WelcomeScreen extends StatelessWidget {
                 height: 60.h,
                 child: ElevatedButton(
                   onPressed: () {
-                   Navigator.pushNamed(context, '/logIn');
+                   Get.toNamed('/logIn');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: buttonColor2,
@@ -77,7 +79,7 @@ class WelcomeScreen extends StatelessWidget {
                 text: "Sign up",
                 backgroundColor: buttonColor, // Pass any color
                 onPressed: () {
-                  Navigator.pushNamed(context, '/signUp');
+                  Get.toNamed('/signUp');
                 },
               ),
 

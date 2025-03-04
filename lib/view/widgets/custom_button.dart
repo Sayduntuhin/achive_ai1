@@ -5,12 +5,14 @@ class CustomButton extends StatelessWidget {
   final String text;
   final Color backgroundColor;
   final VoidCallback onPressed;
+  final Color? borderColor;
 
   const CustomButton({
     super.key,
     required this.text,
     required this.backgroundColor,
     required this.onPressed,
+    this.borderColor,
   });
 
   @override
@@ -24,6 +26,8 @@ class CustomButton extends StatelessWidget {
           backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.r),
+            side: borderColor != null ? BorderSide(color: borderColor!) : BorderSide.none,
+
           ),
         ),
         child: Text(
@@ -32,7 +36,7 @@ class CustomButton extends StatelessWidget {
             fontFamily: "Philosopher",
             fontSize: 16.sp,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: borderColor  != null ? Color(0xff1C4A5A) : Colors.white,
           ),
         ),
       ),
