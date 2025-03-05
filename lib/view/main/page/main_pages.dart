@@ -1,3 +1,4 @@
+import 'package:achive_ai/view/ai/pages/ai_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controller/buttom_navigation_controller.dart';
@@ -36,7 +37,7 @@ class MainScreen extends StatelessWidget {
       case 1:
         return HomePage();
       case 2:
-        return HomePage(); // Replace with Profile Page
+        return ChatBotScreen(); // Replace with Profile Page
       case 3:
         return SettingsScreen();
       default:

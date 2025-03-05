@@ -1,4 +1,5 @@
 import 'package:achive_ai/themes/colors.dart';
+import 'package:achive_ai/view/home/widgets/calander.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -27,7 +28,7 @@ class HomePage extends StatelessWidget {
           SliverPersistentHeader(
             pinned: false, // ✅ Hides when scrolling
             delegate: _SliverDateSelectorDelegate(
-              child: _buildDateSelector(),
+              child: CalendarWidget(),
               height: 100.h,
             ),
           ),
@@ -134,7 +135,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// ✅ Date Selector Row (Hides on Scroll)
+ /* /// ✅ Date Selector Row (Hides on Scroll)
   Widget _buildDateSelector() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
@@ -170,7 +171,7 @@ class HomePage extends StatelessWidget {
         }),
       ),
     );
-  }
+  }*/
 
   /// ✅ Daily Goals Section
   Widget _buildDailyGoals() {
@@ -190,7 +191,6 @@ class HomePage extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildGoalCard(String title, double initialProgress) {
     return StatefulBuilder(
       builder: (context, setState) {
@@ -244,7 +244,7 @@ class HomePage extends StatelessWidget {
                 minHeight: 8.h,
               ),
               // Slider(value: progress, onChanged: (value) {}),
-              /* Slider(
+          /* Slider(
                 value: progress,
                 min: 0,
                 max: 100,
@@ -256,6 +256,7 @@ class HomePage extends StatelessWidget {
                   });
                 },
               ),*/
+
             ],
           ),
         );
@@ -346,6 +347,12 @@ class _SliverDateSelectorDelegate extends SliverPersistentHeaderDelegate {
       child: child,
     );
   }
+/*  @override
+  bool shouldRebuild(_SliverDateSelectorDelegate oldDelegate) => false;*/
+
   @override
-  bool shouldRebuild(_SliverDateSelectorDelegate oldDelegate) => false;
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
+    return true; // Rebuild if the delegate changes
+  }
 }
+
