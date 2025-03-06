@@ -14,6 +14,7 @@ class TermsAndConditionsScreen extends StatelessWidget {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(0.1.sh),
         child: CustomAppBar(
+          backgroundColor: Colors.white,
           title: "Terms & Conditions",
           borderColor: secondaryBorderColor,
           textColor: textColor,

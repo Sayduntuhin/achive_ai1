@@ -29,6 +29,7 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(0.1.sh),
         child: CustomAppBar(
+          backgroundColor: Colors.white,
           title: "Personal Information",
           borderColor: secondaryBorderColor,
           textColor: textColor,

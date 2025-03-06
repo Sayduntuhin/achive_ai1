@@ -146,6 +146,7 @@ class SettingsScreen extends StatelessWidget {
   void _showDeleteDataDialog() {
     Get.dialog(
       AlertDialog(
+        backgroundColor: Colors.white,
         title: Text("Are you sure you want to delete all your data?",style: TextStyle(fontSize: 14.sp,fontFamily: "Poppins"),textAlign: TextAlign.center,),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15.r),
@@ -153,8 +154,7 @@ class SettingsScreen extends StatelessWidget {
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              // Add your logic for deleting the data here
-              Get.back(); // Close the dialog
+              Get.back();
             },
             style: TextButton.styleFrom(
               backgroundColor: Colors.red, // Orange color for "Yes"
@@ -203,6 +203,7 @@ class SettingsScreen extends StatelessWidget {
   void _showLogoutDialog() {
     Get.dialog(
       AlertDialog(
+        backgroundColor: Colors.white,
         title: Text(
           "Do you really want to log out?",
           style: TextStyle(fontSize: 14.sp, fontFamily: "Poppins"),
@@ -218,9 +219,7 @@ class SettingsScreen extends StatelessWidget {
               Get.dialog(
                 barrierDismissible: false,
                 const CustomLoadingIndicator(),
-
               );
-
               // Simulate a delay before navigating to login
               Future.delayed(Duration(seconds: 2), () {
                 SnackbarHelper.showInfoSnackbar("Log Out Successfully");

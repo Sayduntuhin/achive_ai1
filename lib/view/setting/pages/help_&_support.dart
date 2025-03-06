@@ -18,6 +18,7 @@ class HelpAndSupportScreen extends StatelessWidget {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(0.1.sh),
         child: CustomAppBar(
+          backgroundColor: Colors.white,
           title: "Help & Support",
           borderColor: secondaryBorderColor,
           textColor: textColor,

@@ -2,6 +2,8 @@ import 'package:achive_ai/themes/colors.dart';
 import 'package:achive_ai/view/home/widgets/calander.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -93,7 +95,11 @@ class HomePage extends StatelessWidget {
           Spacer(),
 
           /// ✅ Icons (Lightning & Notification with Badge)
-          Icon(Icons.bolt, color: buttonColor, size: 30.sp), // ⚡ Icon
+          InkWell(
+          onTap: (){
+            Get.toNamed("/upgradePlan");
+          },
+              child: Icon(Icons.bolt, color: buttonColor, size: 30.sp)), // ⚡ Icon
 
           /// ✅ Notification Icon with Badge
           Stack(
@@ -305,7 +311,7 @@ class HomePage extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.radio_button_checked,
-                  color: Colors.orangeAccent, size: 18.sp),
+                  color: buttonColor, size: 18.sp),
               SizedBox(width: 10.w),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

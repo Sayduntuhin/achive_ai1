@@ -1,3 +1,4 @@
+import 'package:achive_ai/subcriptions/pages/upgrade_page.dart';
 import 'package:achive_ai/view/forgetPassword/pages/forget_password.dart';
 import 'package:achive_ai/view/forgetPassword/pages/otp_verification_page.dart';
 import 'package:achive_ai/view/forgetPassword/pages/pass_change_success_page.dart';
@@ -29,6 +30,7 @@ class Routes {
   static const String helpSupport = "/helpSupport";
   static const String termsConditions = "/termsConditions";
   static const String privacyPolicy = "/privacyPolicy";
+  static const String upgradePlan = "/upgradePlan";
 }
 
 class AppPages {
@@ -42,7 +44,7 @@ class AppPages {
     GetPage(name: Routes.otpVerification, page: () => OtpVerificationScreen(), transition: Transition.size),
     GetPage(name: Routes.resetPassword , page: () => ResetPasswordScreen(), transition: Transition.size),
     GetPage(name: Routes.successResetPassword , page: () => PasswordChangedScreen(), transition: Transition.fadeIn),
-   //>>>>>>>>>>>>>>>>SignUp>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+   //>>>>>>>>>>>>>>>>SignUp>>>>>>>>>>>>>>>>>>>>>>>>>>      >>>>>
     GetPage(name: Routes.signUP, page: () => SignUpScreen(), transition: Transition.size),
     //>>>>>>>>>>>>>>>>MainPage>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     GetPage(name: Routes.mainPage, page: () => MainScreen(), transition: Transition.fadeIn),
@@ -52,6 +54,7 @@ class AppPages {
     GetPage(name: Routes.helpSupport, page: () => HelpAndSupportScreen(), transition: Transition.fadeIn),
     GetPage(name: Routes.termsConditions, page: () => TermsAndConditionsScreen(), transition: Transition.fadeIn),
     GetPage(name: Routes.privacyPolicy, page: () => PrivacyPolicy(), transition: Transition.fadeIn),
-
+    //>>>>>>>>>>>>>>>>Subscriptions Page>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    GetPage(name: Routes.upgradePlan, page: () => UpgradePlanScreen(), transition: Transition.fadeIn),
   ];
 }

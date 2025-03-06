@@ -75,7 +75,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.title,
     this.onBackPress,
-    this.backgroundColor = Colors.white,
+    required this.backgroundColor,
     this.borderColor = Colors.grey,
     this.textColor = Colors.black,
   });

@@ -14,6 +14,7 @@ class PrivacyPolicy extends StatelessWidget {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(0.1.sh),
         child: CustomAppBar(
+          backgroundColor: Colors.white,
           title: "Privacy Policy",
           borderColor: secondaryBorderColor,
           textColor: textColor,
