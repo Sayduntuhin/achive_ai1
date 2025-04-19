@@ -11,8 +11,8 @@ class AppLogo extends StatelessWidget {
 
   const AppLogo({
     super.key,
-    this.logoSize = 0.2, // Default 20% of screen width/height
-    this.title = "Achieve Ai",
+    this.logoSize = 0.13,
+    this.title = "MyPerfectLife Ai",
     this.titleFontSize = 40,
   });
 
@@ -26,7 +26,7 @@ class AppLogo extends StatelessWidget {
           width: logoSize.sw,
           height: logoSize.sh,
         ),
-
+         SizedBox(height: 0.02.sh),
         /// *** App Name ***
         Text(
           title,

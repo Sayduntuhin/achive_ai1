@@ -83,7 +83,7 @@ class _PasswordChangedScreenState extends State<PasswordChangedScreen>
                   style: TextStyle(
                     fontFamily: "Poppins",
                     fontSize: 14.sp,
-                    color: Colors.white70,
+                    color: secondaryTextColor.withAlpha(150),
                   ),
                 ),
 
@@ -110,10 +110,10 @@ class _PasswordChangedScreenState extends State<PasswordChangedScreen>
                     child: Text(
                       "Back To Login",
                       style: TextStyle(
-                        fontFamily: "Poppins",
-                        fontSize: 16.sp,
+                        fontFamily: "Philosopher",
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: secondaryTextColor,
                       ),
                     ),
                   ),

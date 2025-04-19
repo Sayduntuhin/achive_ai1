@@ -24,17 +24,16 @@ class ForgotPasswordScreen extends StatelessWidget {
             children: [
               /// *** App Logo ***
               AppLogo(),
-              SizedBox(height: 30.h),
-        
+              SizedBox(height: 0.03.sh),
               /// *** Forgot Password Title ***
               Text(
                 "Forgot Password?",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: "Philosopher",
-                  fontSize: 20.sp,
+                  fontSize: 25.sp,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: secondaryTextColor,
                 ),
               ),
         
@@ -46,9 +45,9 @@ class ForgotPasswordScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: "Poppins",
-                  fontSize: 14.sp,
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w400,
-                  color: Colors.white70,
+                  color: secondaryTextColor.withAlpha(100),
                 ),
               ),
         
@@ -82,7 +81,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                     text: "Remember Password? ",
                     style: TextStyle(
                       fontFamily: "Poppins",
-                      color: Colors.white70,
+                      color: secondaryTextColor,
                       fontSize: 10.sp,
                     ),
                     children: [
@@ -95,7 +94,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                             "Login",
                             style: TextStyle(
                               fontFamily: "Poppins",
-                              color: buttonColor,
+                              color: subTextColor,
                               fontSize: 10.sp,
                               fontWeight: FontWeight.bold,
                             ),

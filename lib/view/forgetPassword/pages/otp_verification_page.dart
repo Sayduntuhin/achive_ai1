@@ -46,13 +46,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   alignment: Alignment.topLeft,
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white, width: 1),
-                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(color: secondaryColor, width: 1),
+                      borderRadius: BorderRadius.circular(15.r),
                     ),
                     child: IconButton(
                       icon: Padding(
                         padding: const EdgeInsets.only(left: 5),
-                        child: Icon(Icons.arrow_back_ios, color: Colors.white, size: 20.sp),
+                        child: Icon(Icons.arrow_back_ios, color: secondaryColor, size: 20.sp),
                       ),
                       onPressed: () {
                         Get.back();
@@ -60,11 +60,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     ),
                   ),
                 ),
-
+                SizedBox(height: 0.015.sh),
                 /// *** App Logo & Title ***
                 AppLogo(),
 
-                SizedBox(height: 30.h),
+                SizedBox(height: 0.03.sh),
 
                 /// *** OTP Verification Title ***
                 Text(
@@ -72,9 +72,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: "Philosopher",
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    fontSize: 25.sp,
+                    fontWeight: FontWeight.w700,
+                    color: secondaryTextColor,
                   ),
                 ),
 
@@ -86,8 +86,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: "Poppins",
-                    fontSize: 14.sp,
-                    color: Colors.white70,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w400,
+                    color: secondaryTextColor.withAlpha(100),
                   ),
                 ),
 
@@ -107,9 +108,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       borderRadius: BorderRadius.circular(10.r),
                       fieldHeight: 50.h,
                       fieldWidth: 50.w,
-                      activeFillColor: Colors.white,
-                      inactiveFillColor: Colors.white,
-                      selectedFillColor: Colors.white,
+                      activeFillColor: secondaryColor,
+                      inactiveFillColor: secondaryColor,
+                      selectedFillColor: secondaryColor,
                       activeColor: borderColor,
                       inactiveColor: Colors.white70,
                       selectedColor: borderColor,
@@ -155,7 +156,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               "Resend",
                               style: TextStyle(
                                 fontFamily: "Poppins",
-                                color: buttonColor,
+                                color: subTextColor,
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.bold,
                               ),

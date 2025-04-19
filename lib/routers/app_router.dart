@@ -1,4 +1,3 @@
-import 'package:achive_ai/subcriptions/pages/upgrade_page.dart';
 import 'package:achive_ai/view/forgetPassword/pages/forget_password.dart';
 import 'package:achive_ai/view/forgetPassword/pages/otp_verification_page.dart';
 import 'package:achive_ai/view/forgetPassword/pages/pass_change_success_page.dart';
@@ -14,6 +13,7 @@ import 'package:achive_ai/view/welcome/pages/welcome_page.dart';
 import 'package:get/get.dart';
 import '../view/aiboost/page/aiboost_page.dart';
 import '../view/setting/pages/personal_page.dart';
+import '../view/subcriptions/pages/upgrade_page.dart';
 
 class Routes {
   static const String initial = "/";

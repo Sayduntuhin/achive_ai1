@@ -1,3 +1,4 @@
+import 'package:achive_ai/themes/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -21,9 +22,9 @@ class CustomTextField extends StatelessWidget {
       style: TextStyle(color: Colors.black),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: TextStyle(color: Colors.grey, fontSize: 14.sp),
+        hintStyle: TextStyle(color: Color(0xFF727272), fontSize: 14.sp),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: secondaryTextColor,
         contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20.r),
@@ -31,7 +32,7 @@ class CustomTextField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20.r),
-          borderSide: BorderSide(color: Colors.orangeAccent, width: 1.5),
+          borderSide: BorderSide(color: borderColor, width: 1.5),
         ),
       ),
     );

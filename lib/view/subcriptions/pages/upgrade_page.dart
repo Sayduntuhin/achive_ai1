@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import '../../themes/colors.dart';
-import '../../view/setting/widgets/custom_app_bar.dart';
+
+import '../../../themes/colors.dart';
+import '../../setting/widgets/custom_app_bar.dart';
+import '../widgets/upgrade_dialoge_box.dart';
 
 class UpgradePlanScreen extends StatefulWidget {
   const UpgradePlanScreen({super.key});
@@ -50,14 +52,14 @@ class _UpgradePlanScreenState extends State<UpgradePlanScreen> {
             Container(
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10.r),
-                  color: Colors.white),
+                  color:  Color(0x804ba3c3),),
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
                 child: Column(
                   children: [
                     /// Pricing Section
                     Text(
-                      "Achieve Ai",
+                      "MyPerfectLife Ai",
                       style: TextStyle(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w700,
@@ -99,7 +101,14 @@ class _UpgradePlanScreenState extends State<UpgradePlanScreen> {
             CustomButton(
               text: "Continue - \$${isMonthly ? '4.99' : '49.99'}",
               backgroundColor: buttonColor,
-              onPressed: () {},
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return UpgradedDialog();
+                  },
+                );
+              },
             ),
             Spacer(flex: 1),
           ],
@@ -117,7 +126,7 @@ class _UpgradePlanScreenState extends State<UpgradePlanScreen> {
         });
       },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 30.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 0.13.sw, vertical: 12.h),
         decoration: BoxDecoration(
           color: isActive ? buttonColor : Colors.white, // Use buttonColor when active, white when inactive
           borderRadius: BorderRadius.circular(8.r),
@@ -128,7 +137,7 @@ class _UpgradePlanScreenState extends State<UpgradePlanScreen> {
           style: TextStyle(
             fontSize: 16.sp,
             fontWeight: FontWeight.w600,
-            color: isActive ? Colors.white : buttonColor, // Text color is white when active, buttonColor when inactive
+            color: isActive ? secondaryColor : buttonColor, // Text color is white when active, buttonColor when inactive
             fontFamily: "Poppins",
           ),
         ),

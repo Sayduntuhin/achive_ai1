@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // Import flutter_svg
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../themes/colors.dart';
+
 class CustomTextFieldForSetting extends StatelessWidget {
   final String label;
   final String hintText;
@@ -39,7 +41,6 @@ class CustomTextFieldForSetting extends StatelessWidget {
           ),
         ),
         SizedBox(height: 6.h),
-
         // Text Field
         TextField(
           controller: controller,
@@ -52,19 +53,18 @@ class CustomTextFieldForSetting extends StatelessWidget {
             fillColor: Colors.white,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: Colors.orange.shade300),
+              borderSide: BorderSide(color: secondaryBorderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: Colors.orange, width: 1.5),
+              borderSide: BorderSide(color:borderColor, width: 1.5),
             ),
             // If a suffixIconPath is provided, show the SVG as a button
             suffixIcon: suffixIconPath != null
                 ? IconButton(
               icon: SvgPicture.asset(
-                suffixIconPath!,  // Path to the SVG
-                color: Colors.orange,  // Color of the SVG icon
-                width: 20.w,           // Set appropriate size
+                suffixIconPath!,
+                width: 20.w,
                 height: 20.h,
               ),
               onPressed: onSuffixTap, // Action when icon is pressed

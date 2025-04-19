@@ -47,7 +47,7 @@ class HelpAndSupportScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.orange, width: 1),
+                border: Border.all(color: borderColor, width: 2),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: TextField(
@@ -74,6 +74,7 @@ class HelpAndSupportScreen extends StatelessWidget {
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
+                        backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
                         ),

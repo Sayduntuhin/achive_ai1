@@ -69,7 +69,7 @@ class LogInScreen extends StatelessWidget {
                               child: Text(
                                 "Forgot Password?",
                                 style: TextStyle(
-                                  color: Color(0xffFF2929),
+                                  color: subTextColor,
                                   fontFamily: "Poppins",
                                   fontSize: 11.sp,
                                 ),
@@ -122,7 +122,7 @@ class LogInScreen extends StatelessWidget {
                                     "Sign Up",
                                     style: TextStyle(
                                       fontFamily: "Poppins",
-                                      color: textColor,
+                                      color: subTextColor,
                                       fontSize: 11.sp,
                                       fontWeight: FontWeight.bold,
                                     ),

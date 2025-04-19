@@ -47,7 +47,7 @@ class _CustomSlideButtonState extends State<CustomSlideButton>
       width: double.infinity,
       height: 70.h,
       decoration: BoxDecoration(
-        color: Color(0xFF496E7B),
+        color: buttonInnerColor,
         borderRadius: BorderRadius.circular(50.r),
       ),
       child: Stack(

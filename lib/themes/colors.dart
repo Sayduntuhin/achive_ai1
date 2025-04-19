@@ -1,15 +1,19 @@
 import 'dart:ui';
 
-Color titleColor = const Color(0xffED840F);
-Color textColor = const Color(0xffED840F);
-Color textColor2 = const Color(0xff1C4A5A);
-Color buttonColor = const Color(0xffED840F);
+Color titleColor = const Color(0xff4BA3C3);
+Color textColor = const Color(0xff4BA3C3);
+Color secondaryTextColor = const Color(0xffD1D5DB);
+Color textColor2 = const Color(0xFF1C2A45);
+Color subTextColor = const Color(0xffAAB8FF);
+Color buttonColor = const Color(0xff4BA3C3);
+Color buttonInnerColor = const Color(0x33D1D5DB);
 Color buttonColor2 = const Color(0xff496E7B);
-Color backgroundColor = const Color(0xff1C4A5A);
-Color backgroundColor2 = const Color(0xff2c4a57);
+Color backgroundColor = const Color(0xff1C2A45);
+Color backgroundColor2 = const Color(0x334ba3c3);
 Color backgroundColorMain = const Color(0xffF4F4F4);
 Color dividerColor = const Color(0xffD7D7D7);
-Color primaryColor = const Color(0xffED840F);
-Color borderColor = const Color(0xffED840F);
+Color primaryColor = const Color(0xff4BA3C3);
+Color secondaryColor = const Color(0xffD1D5DB);
+Color borderColor = const Color(0xff4BA3C3);
 Color loadingIndicatorColor = const Color(0xffED840F);
 Color secondaryBorderColor  = const Color(0xff1C4A5A);

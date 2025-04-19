@@ -3,23 +3,18 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import '../../../themes/colors.dart';
-
 class ChatBotScreen extends StatefulWidget {
   const ChatBotScreen({super.key});
 
   @override
   State<ChatBotScreen> createState() => _ChatBotScreenState();
 }
-
 class _ChatBotScreenState extends State<ChatBotScreen> {
   final TextEditingController _messageController = TextEditingController();
-  final ScrollController _scrollController = ScrollController(); // ✅ Scroll Controller
-
-  // Dummy chat messages
+  final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> _messages = [
    // {"text": "Come on, the first step is to start walking for 10 minutes every day! I’m setting a reminder for you!", "isUser": false, "showButton": true},
   ];
-
   /// ✅ Scroll to the bottom smoothly
   void _scrollToBottom() {
     Future.delayed(Duration(milliseconds: 100), () {
@@ -32,7 +27,6 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
       }
     });
   }
-
   /// ✅ Send Message & AI Reply
   void _sendMessage() {
     if (_messageController.text.isNotEmpty) {
@@ -41,11 +35,9 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
         _messages.add({"text": "This is an AI-generated response.", "isUser": false});
         _messageController.clear();
       });
-
-      _scrollToBottom(); // ✅ Auto-scroll after sending message
+      _scrollToBottom();
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,19 +73,16 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
               },
             ),
           ),
-
           /// ✅ Message Input Field
           _buildMessageInput(),
         ],
       ),
     );
   }
-
   /// ✅ Chat Bubble Widget
   Widget _buildChatBubble(Map<String, dynamic> message) {
     bool isUser = message["isUser"] as bool;
     bool showButton = message.containsKey("showButton") ? message["showButton"] : false;
-
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -129,7 +118,6 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
       ),
     );
   }
-
   /// ✅ "Add To Task" Button
   Widget _buildAddToTaskButton() {
     return GestureDetector(
@@ -154,7 +142,6 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
       ),
     );
   }
-
   /// ✅ Message Input Field
   Widget _buildMessageInput() {
     return Padding(
@@ -198,5 +185,4 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
       ),
     );
   }
-
 }

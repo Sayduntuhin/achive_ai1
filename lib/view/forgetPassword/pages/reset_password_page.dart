@@ -29,47 +29,45 @@ class ResetPasswordScreen extends StatelessWidget {
                   alignment: Alignment.topLeft,
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white, width: 1),
-                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(color: secondaryColor, width: 1),
+                      borderRadius: BorderRadius.circular(15.r),
                     ),
                     child: IconButton(
                       icon: Padding(
                         padding: const EdgeInsets.only(left: 5),
-                        child: Icon(Icons.arrow_back_ios, color: Colors.white, size: 20.sp),
+                        child: Icon(Icons.arrow_back_ios, color: secondaryColor, size: 20.sp),
                       ),
                       onPressed: () {
-                        Navigator.pop(context);
+                        Get.back();
                       },
                     ),
                   ),
                 ),
+                SizedBox(height: 0.015.sh),
                 /// *** App Logo ***
                 AppLogo(),
-                SizedBox(height: 30.h),
-        
+                SizedBox(height: 0.03.sh),
                 /// *** Forgot Password Title ***
                 Text(
                   "Create New Password",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: "Philosopher",
-                    fontSize: 20.sp,
+                    fontSize: 25.sp,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: secondaryTextColor,
                   ),
                 ),
-        
                 SizedBox(height: 10.h),
-        
                 /// *** Instruction Text ***
                 Text(
                   "Your new password must be unique from those previously used.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: "Poppins",
-                    fontSize: 14.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w400,
-                    color: Colors.white70,
+                    color: secondaryTextColor.withAlpha(100),
                   ),
                 ),
         

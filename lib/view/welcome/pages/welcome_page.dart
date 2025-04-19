@@ -23,15 +23,14 @@ class WelcomeScreen extends StatelessWidget {
               /// *** App Logo ***
               SvgPicture.asset(
                 'assets/svg/logo.svg', // Replace with your logo
-                width: 0.2.sw,
-                height: 0.2.sh,
+                width: 0.12.sw,
+                height: 0.12.sh,
               ),
 
               SizedBox(height: 20.h),
-
               /// *** Title ***
               Text(
-                "Welcome To\nAchieve Ai",
+                "Welcome To\nMyPerfectLife Ai",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: "Philosopher",
@@ -53,8 +52,7 @@ class WelcomeScreen extends StatelessWidget {
                    Get.toNamed('/logIn');
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: buttonColor2,
-
+                    backgroundColor: buttonInnerColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20.r),
                       side: BorderSide(color: buttonColor)
@@ -66,7 +64,7 @@ class WelcomeScreen extends StatelessWidget {
                       fontFamily: "Philosopher",
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: titleColor,
+                      color: textColor,
                     ),
                   ),
                 ),

@@ -40,15 +40,15 @@ class PrivacyPolicy extends StatelessWidget {
               ),
               SizedBox(height: 20.h),
               _buildTermsItem(
-                  "1. The chatbot provides general business guidance and advice but is not a substitute for professional consulting services."),
+                  "The chatbot provides general business guidance and advice but is not a substitute for professional consulting services."),
               _buildTermsItem(
-                  "2. We offer both free and paid subscription plans. Paid plans are billed on a recurring basis unless canceled."),
+                  "We offer both free and paid subscription plans. Paid plans are billed on a recurring basis unless canceled."),
               _buildTermsItem(
-                  "3. User data is handled securely and in accordance with our Privacy Policy."),
+                  "User data is handled securely and in accordance with our Privacy Policy."),
               _buildTermsItem(
-                  "4. We are not responsible for decisions made based on the chatbot's advice or any resulting outcomes."),
+                  "We are not responsible for decisions made based on the chatbot's advice or any resulting outcomes."),
               _buildTermsItem(
-                  "5. Misuse of the service or violation of these terms may result in termination of access."),
+                  "Misuse of the service or violation of these terms may result in termination of access."),
               SizedBox(height: 20.h),
               Text(
                 "By continuing to use the chatbot, you accept these terms. For questions, contact our support team.",

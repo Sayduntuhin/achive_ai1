@@ -2,8 +2,6 @@ import 'package:achive_ai/themes/colors.dart';
 import 'package:achive_ai/view/widgets/app_logo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
-
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_textfield.dart';
 
@@ -20,11 +18,10 @@ class SignUpScreen extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 30.h),
             child: Column(
               children: [
+                SizedBox(height: 0.05.sh),
                 /// *** App Logo ***
                 AppLogo(),
-
-                SizedBox(height: 30.h),
-
+                SizedBox(height: 0.1.sh),
                 /// *** Sign-Up Card ***
                 Container(
                   padding:
@@ -73,7 +70,7 @@ class SignUpScreen extends StatelessWidget {
                               text: "Terms & Conditions",
                               style: TextStyle(
                                   fontFamily: "Poppins",
-                                  color:textColor,
+                                  color:subTextColor,
                                   fontSize: 10.sp,
                                   fontWeight: FontWeight.w400),
                             ),
@@ -87,7 +84,7 @@ class SignUpScreen extends StatelessWidget {
                               text: "Privacy Policy",
                               style: TextStyle(
                                   fontFamily: "Poppins",
-                                  color: textColor,
+                                  color: subTextColor,
                                   fontSize: 10.sp,
                                   fontWeight: FontWeight.w400),
                             ),
@@ -95,7 +92,9 @@ class SignUpScreen extends StatelessWidget {
                         ),
                       ),
 
-                      SizedBox(height: 20.h),
+                      SizedBox(
+                        height: 0.03.sh,
+                      ),
 
                       /// *** Sign-Up Button ***
                       CustomButton(
@@ -128,7 +127,7 @@ class SignUpScreen extends StatelessWidget {
                                     "Log In",
                                     style: TextStyle(
                                       fontFamily: "Poppins",
-                                      color: Colors.orangeAccent,
+                                      color: subTextColor,
                                       fontSize: 11.sp,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -149,5 +148,4 @@ class SignUpScreen extends StatelessWidget {
       ),
     );
   }
-
 }

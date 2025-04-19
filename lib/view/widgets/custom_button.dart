@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../themes/colors.dart';
+
 class CustomButton extends StatelessWidget {
   final String text;
   final Color backgroundColor;
@@ -36,7 +38,7 @@ class CustomButton extends StatelessWidget {
             fontFamily: "Philosopher",
             fontSize: 16.sp,
             fontWeight: FontWeight.w600,
-            color: borderColor  != null ? Color(0xff1C4A5A) : Colors.white,
+            color: borderColor  != null ? Color(0xff1C4A5A) : secondaryTextColor,
           ),
         ),
       ),
