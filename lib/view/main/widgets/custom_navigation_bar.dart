@@ -18,7 +18,7 @@ class CustomBottomNavBar extends StatelessWidget {
           height: 85.h, // Adjust height
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
           decoration: BoxDecoration(
-            color: const Color(0xFF1C4A5A), // Background Color
+            color: navbarColor, // Background Color
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(30.0), // Rounded Corners
               topRight: Radius.circular(30.0),
@@ -27,8 +27,8 @@ class CustomBottomNavBar extends StatelessWidget {
               BoxShadow(
                 color: Colors.black26,
                 blurRadius: 8.0,
-                spreadRadius: 2.0,
-                offset: const Offset(0, -2),
+                spreadRadius: 1.0,
+                offset: const Offset(0, -0),
               ),
             ],
           ),
@@ -38,7 +38,7 @@ class CustomBottomNavBar extends StatelessWidget {
               _buildNavItem(controller, index: 0, icon: Icons.home_outlined, label: "Home"),
               _buildNavItem(controller, index: 1, svgPath: "assets/svg/task.svg", label: "Tasks"),
               _buildNavItem(controller, index: 2, svgPath: "assets/svg/ai.svg", label: "AI"),
-              _buildNavItem(controller, index: 3, icon: Icons.settings_sharp, label: "Settings"),
+              _buildNavItem(controller, index: 3, svgPath: "assets/svg/setting.svg", label: "Settings"),
             ],
           ),
         );
@@ -63,7 +63,7 @@ class CustomBottomNavBar extends StatelessWidget {
         height: 65.h, // Adjust height
         padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 10.w),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xffED840F).withAlpha(50) : Colors.transparent,
+          color: isSelected ? Color(0x421C2A45) : Colors.transparent,
           borderRadius: BorderRadius.circular(10), // Rounded Box
         ),
         child: Column(
@@ -75,11 +75,12 @@ class CustomBottomNavBar extends StatelessWidget {
               width: 25.w, // Adjust SVG size
               height: 25.h,
               colorFilter: ColorFilter.mode(
-                isSelected ? buttonColor : Colors.white70,
+                isSelected ? navbarButtonColor : navbarButtonColor,
                 BlendMode.srcIn,
               ),
             )
-                : Icon(icon, size: 24.w, color: isSelected ? buttonColor : Colors.white70),
+                : Icon(icon, size: 26.w, color: isSelected ? navbarButtonColor : navbarButtonColor,
+            ),
             const SizedBox(height: 4), // Space between icon & label
             Text(
               label,
@@ -87,7 +88,8 @@ class CustomBottomNavBar extends StatelessWidget {
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
                 fontFamily: "Philosopher",
-                color: isSelected ? buttonColor : Colors.white70,
+                color:isSelected ? navbarButtonColor : navbarButtonColor,
+
               ),
             ),
           ],

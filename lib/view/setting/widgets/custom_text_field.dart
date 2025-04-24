@@ -10,7 +10,7 @@ class CustomTextFieldForSetting extends StatelessWidget {
   final TextEditingController? controller;
   final bool isPassword;
   final bool isReadOnly;
-  final String? suffixIconPath;  // Update to hold path for SVG
+  final String? suffixIconPath;
   final VoidCallback? onSuffixTap;
   final bool isEditable;
 
@@ -21,9 +21,9 @@ class CustomTextFieldForSetting extends StatelessWidget {
     this.controller,
     this.isPassword = false,
     this.isReadOnly = false,
-    this.suffixIconPath,  // Used SVG path here
+    this.suffixIconPath,
     this.onSuffixTap,
-    this.isEditable = false,  // Add isEditable to control whether it's editable
+    this.isEditable = false,
   });
 
   @override
@@ -31,7 +31,6 @@ class CustomTextFieldForSetting extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label for the text field
         Text(
           label,
           style: TextStyle(
@@ -45,7 +44,7 @@ class CustomTextFieldForSetting extends StatelessWidget {
         TextField(
           controller: controller,
           obscureText: isPassword,
-          readOnly: !isEditable, // Handle non-editable state
+          readOnly: !isEditable,
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: TextStyle(color: Colors.grey.shade500),
@@ -59,7 +58,6 @@ class CustomTextFieldForSetting extends StatelessWidget {
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide(color:borderColor, width: 1.5),
             ),
-            // If a suffixIconPath is provided, show the SVG as a button
             suffixIcon: suffixIconPath != null
                 ? IconButton(
               icon: SvgPicture.asset(
@@ -67,7 +65,7 @@ class CustomTextFieldForSetting extends StatelessWidget {
                 width: 20.w,
                 height: 20.h,
               ),
-              onPressed: onSuffixTap, // Action when icon is pressed
+              onPressed: onSuffixTap,
             )
                 : null,
           ),

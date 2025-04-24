@@ -3,19 +3,24 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import '../../../themes/colors.dart';
+
 class ChatBotScreen extends StatefulWidget {
   const ChatBotScreen({super.key});
 
   @override
   State<ChatBotScreen> createState() => _ChatBotScreenState();
 }
+
 class _ChatBotScreenState extends State<ChatBotScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Map<String, dynamic>> _messages = [
-   // {"text": "Come on, the first step is to start walking for 10 minutes every day! I’m setting a reminder for you!", "isUser": false, "showButton": true},
-  ];
-  /// ✅ Scroll to the bottom smoothly
+
+  // Empty message list initially
+  final List<Map<String, dynamic>> _messages = [];
+
+  bool _hasConversationEnded = false;
+
+  /// Scroll to the bottom smoothly
   void _scrollToBottom() {
     Future.delayed(Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
@@ -27,129 +32,188 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
       }
     });
   }
-  /// ✅ Send Message & AI Reply
+
+  /// Send Message & AI Reply
   void _sendMessage() {
     if (_messageController.text.isNotEmpty) {
       setState(() {
-        _messages.add({"text": _messageController.text, "isUser": true});
-        _messages.add({"text": "This is an AI-generated response.", "isUser": false});
+        // Add user message
+        _messages.add({
+          "text": _messageController.text,
+          "isUser": true
+        });
+
+        // Add AI response
+        _messages.add({
+          "text": "It's a completely normal feeling! But you're not alone. If you had everything organized simply, life would be much better, wouldn't it?",
+          "isUser": false,
+        });
+
         _messageController.clear();
+
+        // Mark conversation as having at least one exchange
+        _hasConversationEnded = true;
       });
       _scrollToBottom();
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60.h),
-        child: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: true,
-          title: Text(
-            "Achieve Ai",
-            style: TextStyle(
-              fontSize: 22.sp,
-              fontWeight: FontWeight.w700,
-              color: textColor,
-              fontFamily: "Philosopher",
-            ),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          "Achieve AI",
+          style: TextStyle(
+            fontSize: 24.sp,
+            fontWeight: FontWeight.w700,
+            color: titleColor,
+            fontFamily: "Philosopher",
           ),
         ),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          /// ✅ Chat Messages
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController, // ✅ Attach Scroll Controller
-              padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _buildChatBubble(message);
-              },
-            ),
+          Column(
+            children: [
+              /// Chat Messages
+              Expanded(
+                child: ListView(
+                  controller: _scrollController,
+                  padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+                  children: [
+                    // Build all chat messages
+                    ..._messages.map((message) => _buildChatBubble(message)),
+
+                    // Add some bottom padding to ensure messages don't get hidden behind the input
+                    SizedBox(height: _hasConversationEnded ? 60.h : 0),
+                  ],
+                ),
+              ),
+              /// Message Input Field
+              _buildMessageInput(),
+            ],
           ),
-          /// ✅ Message Input Field
-          _buildMessageInput(),
+
+          // Add to Goals button - positioned at bottom left
+          if (_hasConversationEnded)
+            Positioned(
+              left: 20.w,
+              bottom: 80.h, // Positioned above the message input
+              child: _buildAddToGoalsButton(),
+            ),
         ],
       ),
     );
   }
-  /// ✅ Chat Bubble Widget
+
+  /// Chat Bubble Widget
   Widget _buildChatBubble(Map<String, dynamic> message) {
     bool isUser = message["isUser"] as bool;
-    bool showButton = message.containsKey("showButton") ? message["showButton"] : false;
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: EdgeInsets.symmetric(vertical: 5.h, horizontal: 10.w),
-        padding: EdgeInsets.all(12.w),
-        constraints: BoxConstraints(maxWidth: 0.75.sw), // Max width of message
-        decoration: BoxDecoration(
-          color: isUser ? const Color(0xffED840F) : const Color(0xff1C4A5A),
-          borderRadius: BorderRadius.only(
-              topRight: Radius.circular(10.r),
-              topLeft: Radius.circular(10.r),
-              bottomRight: isUser ? Radius.circular(0) : Radius.circular(10.r), // ✅ If AI, round bottomRight
-              bottomLeft: isUser ? Radius.circular(10.r) : Radius.circular(0), // ✅ If User, round bottomLeft
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              message["text"],
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Colors.white,
-                fontFamily: "Poppins",
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          // AI Avatar (only shown for AI messages)
+          if (!isUser) _buildAvatar(isUser: false),
+
+          // Message content - simplified with no decorations
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+            child: Container(
+              constraints: BoxConstraints(maxWidth: 0.7.sw),
+              child: Text(
+                message["text"],
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Color(0xff555555),
+                  fontFamily: "Poppins",
+                ),
               ),
             ),
-            if (showButton) ...[
-              SizedBox(height: 10.h),
-              _buildAddToTaskButton(),
-            ]
-          ],
+          ),
+
+          // User Avatar (only shown for user messages)
+          if (isUser) _buildAvatar(isUser: true),
+        ],
+      ),
+    );
+  }
+
+  /// Avatar Widget
+  Widget _buildAvatar({required bool isUser}) {
+    return Container(
+      width: 32.w,
+      height: 32.w,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isUser ? Colors.grey[300] : Colors.blue[200],
+      ),
+      child: Center(
+        child: Icon(
+          isUser ? Icons.person : Icons.emoji_emotions,
+          size: 18.w,
+          color: isUser ? Colors.grey[700] : Colors.blue[700],
         ),
       ),
     );
   }
-  /// ✅ "Add To Task" Button
-  Widget _buildAddToTaskButton() {
+
+  /// Add To Goals Button
+  Widget _buildAddToGoalsButton() {
     return GestureDetector(
       onTap: () {
-        Get.snackbar("Task Added", "The AI suggestion has been added to your task list!",
-            backgroundColor: Colors.green, colorText: Colors.white);
+        Get.snackbar(
+          "Goal Added",
+          "The AI suggestion has been added to your goals!",
+          backgroundColor: Colors.deepPurple[400],
+          colorText: Colors.white,
+        );
       },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
         decoration: BoxDecoration(
-          color: Colors.green,
+          color: Colors.deepPurple[400],
           borderRadius: BorderRadius.circular(8.r),
         ),
         child: Text(
-          "Add To Task",
+          "Add to Goals",
           style: TextStyle(
             color: Colors.white,
             fontSize: 12.sp,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
     );
   }
-  /// ✅ Message Input Field
+
+  /// Message Input Field
   Widget _buildMessageInput() {
-    return Padding(
+    return Container(
       padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            spreadRadius: 0,
+            offset: Offset(0, -1),
+          ),
+        ],
+      ),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
         decoration: BoxDecoration(
-          color: const Color(0xffF5F7FA), // ✅ Light background color
+          color: Colors.grey[100],
           borderRadius: BorderRadius.circular(25.r),
         ),
         child: Row(
@@ -159,8 +223,8 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
                 controller: _messageController,
                 decoration: InputDecoration(
                   hintText: "Write a message...",
-                  hintStyle: TextStyle(color: textColor2 ),
-                  border: InputBorder.none, // ✅ Removes the default border
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  border: InputBorder.none,
                 ),
               ),
             ),
@@ -169,14 +233,13 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
               child: Container(
                 padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
-                  color: const Color(0xff1C4A5A), // ✅ Dark background for send button
-                  shape: BoxShape.circle, // ✅ Ensures it's a perfect circle
+                  color: Colors.blue[600],
+                  shape: BoxShape.circle,
                 ),
-                child: SvgPicture.asset(
-                  "assets/svg/chat_button.svg", // ✅ Your provided send icon
-                  width: 20.w,
-                  height: 20.h,
-                 // colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                child: Icon(
+                  Icons.send_rounded,
+                  color: Colors.white,
+                  size: 20.w,
                 ),
               ),
             ),

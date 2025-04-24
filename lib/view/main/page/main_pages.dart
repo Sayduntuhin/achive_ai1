@@ -16,14 +16,13 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColorMain,
+      backgroundColor: backgroundColor,
       /// ✅ Wrap `Scaffold` in GetBuilder to ensure updates
       body: GetBuilder<BottomNavController>(
         builder: (controller) {
           return _getPage(controller.selectedIndex);
         },
       ),
-
       /// ✅ Custom Bottom Navigation Bar
       bottomNavigationBar: CustomBottomNavBar(navController: navController),
     );
