@@ -4,33 +4,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../widgets/title_with_view_all.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
-
 class _HomePageState extends State<HomePage> {
+  // Variables for task inputs
+  final TextEditingController _taskNameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  String _taskType = 'Any Time'; // Default task type
   @override
   void initState() {
     super.initState();
-    // Show disclaimer dialog when the page is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showDisclaimerDialog(context);
+      _checkAndShowDisclaimerDialog();
     });
   }
+  ///--------------------------------- Disclaimer Dialog ---------------------------------------
   Future<void> _checkAndShowDisclaimerDialog() async {
     final prefs = await SharedPreferences.getInstance();
     final hasShownDisclaimer = prefs.getBool('hasShownDisclaimer') ?? false;
 
     if (!hasShownDisclaimer) {
-      // Show dialog if it hasn't been shown before
       _showDisclaimerDialog(context);
-      // Set flag to true to prevent showing again
       await prefs.setBool('hasShownDisclaimer', true);
     }
   }
@@ -43,24 +43,22 @@ class _HomePageState extends State<HomePage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
           ),
-          child: Container(
+          child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.85,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Title section with light blue background
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Color(0xFFD4EBEF), // Light blue color from the image
+                    color: Color(0xFFD4EBEF),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(16),
                       topRight: Radius.circular(16),
                     ),
                   ),
-
                   child: Center(
                     child: Text(
                       'Disclaimer',
@@ -68,13 +66,11 @@ class _HomePageState extends State<HomePage> {
                         fontSize: 18,
                         fontFamily: 'Philosopher',
                         fontWeight: FontWeight.w500,
-                        color: titleColor, // Teal-blue color for the title
+                        color: titleColor,
                       ),
                     ),
                   ),
                 ),
-
-                // Content
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -82,10 +78,9 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       Text(
                         'MyPerfectLife AI is designed to provide guidance and suggestions to help you achieve your personal goals. However, please note the following:',
-                        style: TextStyle(fontSize: 10.sp,fontFamily: 'Poppins', color: Colors.black),
+                        style: TextStyle(fontSize: 10.sp, fontFamily: 'Poppins', color: Colors.black),
                       ),
                       SizedBox(height: 16),
-                      // Bullet points with better formatting
                       _bulletPoint(
                         'Results may vary. The effectiveness of our suggestions depends on your commitment, consistency, and individual circumstances.',
                       ),
@@ -101,17 +96,14 @@ class _HomePageState extends State<HomePage> {
                       _bulletPoint(
                         'Your data is processed according to our Privacy Policy. We take your privacy seriously and implement appropriate measures to protect your information.',
                       ),
-
                       SizedBox(height: 24),
-
-                      // Button centered at the bottom
                       Center(
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF4A8F9F), // Teal-blue button color
+                            backgroundColor: Color(0xFF4A8F9F),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8.0),
                             ),
@@ -136,8 +128,6 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-
-// Helper widget for formatted bullet points
   Widget _bulletPoint(String text) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,42 +140,41 @@ class _HomePageState extends State<HomePage> {
         Expanded(
           child: Text(
             text,
-
-            style: TextStyle(fontSize: 10.sp,fontFamily: 'Poppins', color: Colors.black),
+            style: TextStyle(fontSize: 10.sp, fontFamily: 'Poppins', color: Colors.black),
           ),
         ),
       ],
     );
   }
-
-  // Show popup menu when three dots are clicked
-  void _showOptionsMenu(BuildContext context, Offset position) {
+  ///--------------------------------- Options Menu ---------------------------------------
+  void _showOptionsMenu(BuildContext context, Offset position, Size size) {
     showMenu(
       context: context,
       position: RelativeRect.fromLTRB(
-          position.dx,
-          position.dy,
-          position.dx + 1,
-          position.dy + 1
+        position.dx,
+        position.dy+ 10.h,
+        position.dx - 0.75.sw,
+        position.dy ,
+
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.r),
       ),
       color: Colors.white,
+      constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
       items: [
-        // Add to Schedule Option
         PopupMenuItem(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          height: 48.h,
+          height: 0.04.sh,
           child: Row(
             children: [
-              Icon(Icons.access_time, color: Color(0xFF4A9FB5), size: 24.sp),
-              SizedBox(width: 12.w),
+              Icon(Icons.access_time, color: textColor, size: 18.sp),
+              SizedBox(width: 5.w),
               Text(
                 "Add To Schedule",
                 style: TextStyle(
-                  color: Color(0xFF4A9FB5),
-                  fontSize: 16.sp,
+                  color: textColor,
+                  fontSize: 10.sp,
                   fontFamily: 'Poppins',
                 ),
               ),
@@ -195,28 +184,18 @@ class _HomePageState extends State<HomePage> {
             // Add your logic for adding to schedule
           },
         ),
-
-        // Divider
-        PopupMenuItem(
-          enabled: false,
-          height: 1,
-          padding: EdgeInsets.zero,
-          child: Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.2)),
-        ),
-
-        // Cancel Task Option
         PopupMenuItem(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          height: 48.h,
+          height: 0.04.sh,
           child: Row(
             children: [
-              Icon(Icons.delete_outline, color: Color(0xFFFF5A5A), size: 24.sp),
-              SizedBox(width: 12.w),
+              Icon(Icons.delete_outline, color: Color(0xFFFF5A5A), size: 18.sp),
+              SizedBox(width: 5.w),
               Text(
                 "Cancel Task",
                 style: TextStyle(
                   color: Color(0xFFFF5A5A),
-                  fontSize: 16.sp,
+                  fontSize: 10.sp,
                   fontFamily: 'Poppins',
                 ),
               ),
@@ -229,50 +208,345 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
+  void _showOptionsMenuForGoal(BuildContext context, Offset position, Size size) {
+    showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy+ 10.h,
+        position.dx - 0.75.sw,
+        position.dy ,
 
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      color: Colors.white,
+      constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
+      items: [
+        PopupMenuItem(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          height: 0.04.sh,
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline, color: Color(0xFFFF5A5A), size: 18.sp),
+              SizedBox(width: 5.w),
+              Text(
+                "Cancel Task",
+                style: TextStyle(
+                  color: Color(0xFFFF5A5A),
+                  fontSize: 10.sp,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ],
+          ),
+          onTap: () {
+            // Add your logic for canceling task
+          },
+        ),
+      ],
+    );
+  }
+  ///--------------------------------- Open Task Dialog ---------------------------------------
+  void _openTaskDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0),
+              ),
+              backgroundColor: Colors.white,
+              child: Container(
+                padding: EdgeInsets.all(20),
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header and close button
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Add New Task",
+                          style: TextStyle(
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.w500,
+                            color: primaryColor,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                          color: Colors.black,
+                        ),
+                      ],
+                    ),
+
+                    // Make the rest of the content scrollable
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 15.h),
+
+                            // Task Name
+                            Text(
+                              "Task Name",
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: primaryColor,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            SizedBox(height: 5.h),
+                            TextField(
+                              cursorColor: primaryColor,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide(color: primaryColor),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide(color: primaryColor),
+                                ),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+                              ),
+                            ),
+                            SizedBox(height: 15.h),
+
+                            // Description
+                            Text(
+                              "Description",
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: primaryColor,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            SizedBox(height: 5.h),
+                            TextField(
+                              cursorColor: primaryColor,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: BorderSide(color: primaryColor),
+                                ),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+                                hintText: "Add Details About Your Task",
+                                hintStyle: TextStyle(color: Colors.grey),
+                              ),
+                              maxLines: 3,
+                            ),
+                            SizedBox(height: 15.h),
+
+                            // Task Type
+                            Text(
+                              "Task Type",
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: primaryColor,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            SizedBox(height: 5.h),
+                            Row(
+                              children: [
+                                Radio(
+                                  value: "Any Time",
+                                  groupValue: _taskType,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _taskType = value.toString();
+                                    });
+                                  },
+                                  activeColor: Color(0xFF4BAFDA),
+                                ),
+                                Text("Any Time"),
+                                SizedBox(width: 20.w),
+                                Radio(
+                                  value: "Scheduled Task",
+                                  groupValue: _taskType,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _taskType = value.toString();
+                                    });
+                                  },
+                                  activeColor: Color(0xFF4BAFDA),
+                                ),
+                                Text("Scheduled Task"),
+                              ],
+                            ),
+                            SizedBox(height: 15.h),
+
+                            // Date fields for Scheduled Task
+                            if (_taskType == "Scheduled Task")
+                              Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Date Of Task",
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                fontFamily: 'Poppins',
+                                                color: Color(0xFF4BAFDA),
+                                              ),
+                                            ),
+                                            SizedBox(height: 5.h),
+                                            TextField(
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(10.r),
+                                                  borderSide: BorderSide(color: Colors.grey),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  borderSide: BorderSide(color: primaryColor),
+                                                ),
+                                                contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+                                                hintText: "mm/dd/yy",
+                                                suffixIcon: Icon(Icons.calendar_today, size: 20.sp),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(width: 10.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Time Of Task",
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                fontFamily: 'Poppins',
+                                                color: Color(0xFF4BAFDA),
+                                              ),
+                                            ),
+                                            SizedBox(height: 5.h),
+                                            TextField(
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(10.r),
+                                                  borderSide: BorderSide(color: Colors.grey),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  borderSide: BorderSide(color: primaryColor),
+                                                ),
+                                                contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+                                                hintText: "--:--:--",
+                                                suffixIcon: Icon(Icons.access_time, size: 20.sp),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            SizedBox(height: 20.h),
+
+                            // Add Task button
+                            Center(
+                              child: Container(
+                                width: 0.5.sw,
+                                height: 0.05.sh,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    // Handle task addition logic here
+                                    Navigator.pop(context);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:primaryColor,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.r),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    "Add Task",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16.sp,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 10.h),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+  ///--------------------------------- Build Method ---------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: backgroundColor,
       body: CustomScrollView(
         slivers: [
-          /// ✅ SliverAppBar with Header (Pinned)
           SliverAppBar(
             title: _buildHeader(),
             backgroundColor: backgroundColor,
             expandedHeight: 0.08.sh,
-            // Adjust height for styling
             floating: false,
             pinned: true,
-            // ✅ Keeps header visible at all times
-            automaticallyImplyLeading: false, // Removes default back button
+            automaticallyImplyLeading: false,
           ),
-
-          /// ✅ Date Selector (Hides on Scroll)
           SliverPersistentHeader(
-            pinned: false, // ✅ Hides when scrolling
+            pinned: false,
             delegate: _SliverDateSelectorDelegate(
               child: CalendarWidget(),
-              height: 100.h,
+              height: 80.h,
             ),
           ),
-
-          /// ✅ Scrollable Content Below
           SliverList(
             delegate: SliverChildListDelegate([
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Added Task Lists from the image
                     _buildAnyTimeTasks(),
                     SizedBox(height: 20.h),
                     _buildTodaySchedule(),
                     SizedBox(height: 20.h),
-                    _buildDailyGoals(),
+                    _buildTodayGoalTask(),
                     SizedBox(height: 20.h),
-                    _buildDailyTasks(),
+                    _buildDailyGoals(),
+                    SizedBox(height: 50.h),
                   ],
                 ),
               ),
@@ -280,322 +554,30 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-    );
-  }
-
-  /// Any Time Tasks Section (From Image 1)
-  Widget _buildAnyTimeTasks() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Any Time Tasks",
-          style: TextStyle(
-            fontSize: 24.sp,
-            color: Color(0xFF4A9FB5), // Teal blue from image
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Philosopher',
-          ),
+      floatingActionButton: FloatingActionButton(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50.r),
         ),
-        SizedBox(height: 10.h),
-
-        // Task 1 - Completed
-        _buildTaskCard(
-          isCompleted: true,
-          title: "Read A Chapter Of Your Book",
-          subtitle: "Personal Development",
-          showOptions: false,
-        ),
-
-        // Task 2
-        _buildTaskCard(
-          isCompleted: false,
-          title: "Drink 8 Glasses Of Water",
-          subtitle: "Stay Hydrated",
-          showOptions: true,
-        ),
-
-        // Task 3
-        _buildTaskCard(
-          isCompleted: false,
-          title: "Meditate For 10 Minutes",
-          subtitle: "Focus On Breathing",
-          showOptions: true,
-        ),
-      ],
-    );
-  }
-
-  /// Today's Schedule Section (From Image 1)
-  Widget _buildTodaySchedule() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Today's Schedule",
-          style: TextStyle(
-            fontSize: 24.sp,
-            color: Color(0xFF4A9FB5), // Teal blue from image
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Philosopher',
-          ),
-        ),
-        SizedBox(height: 10.h),
-
-        // Meeting - Completed
-        _buildScheduleCard(
-          isCompleted: true,
-          title: "Team Meeting",
-          subtitle: "Discuss Project Timeline",
-          time: "9:00 AM",
-          date: "02.10.2024",
-          showOptions: false,
-        ),
-
-        // Lunch - Completed
-        _buildScheduleCard(
-          isCompleted: true,
-          title: "Lunch With Sarah",
-          subtitle: "At Cafe Milano",
-          time: "1:00 PM",
-          date: "02.10.2024",
-          showOptions: false,
-        ),
-
-        // Evening Reflection
-        _buildScheduleCard(
-          isCompleted: false,
-          title: "Evening Reflection",
-          subtitle: "Journal About Your Day",
-          time: "8:00 PM",
-          date: "02.10.2024",
-          showOptions: true,
-        ),
-      ],
-    );
-  }
-
-  /// Task Card for Any Time Tasks
-  Widget _buildTaskCard({
-    required bool isCompleted,
-    required String title,
-    required String subtitle,
-    bool showOptions = false,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      margin: EdgeInsets.only(bottom: 10.h),
-      decoration: BoxDecoration(
-        color: isCompleted
-            ? Color(0xFF1E3B24) // Dark green for completed tasks
-            : Color(0xFF4A9FB5).withOpacity(0.3), // Light blue for pending tasks
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: isCompleted
-              ? Color(0xFF4CAF50) // Green border for completed
-              : Colors.transparent,
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Checkbox or circle
-          Container(
-            width: 24.w,
-            height: 24.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isCompleted ? Color(0xFF4CAF50) : Colors.transparent,
-              border: Border.all(
-                color: isCompleted ? Colors.transparent : Colors.white,
-                width: 2,
-              ),
-            ),
-            child: isCompleted
-                ? Icon(Icons.check, color: Colors.white, size: 16.sp)
-                : null,
-          ),
-          SizedBox(width: 12.w),
-
-          // Task details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                    color: isCompleted ? Color(0xFF4CAF50) : Colors.white,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.white70,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Options icon (three dots)
-          if (showOptions)
-            InkWell(
-              onTap: () {
-                final RenderBox renderBox = context.findRenderObject() as RenderBox;
-                final position = renderBox.localToGlobal(Offset.zero);
-                _showOptionsMenu(context, position);
-              },
-              child: Icon(
-                Icons.more_horiz,
-                color: Colors.white,
-                size: 24.sp,
-              ),
-            ),
-        ],
+        backgroundColor: flortingButtonColor,
+        onPressed: () {
+          _openTaskDialog();
+        },
+        child: Icon(Icons.add, color: Colors.white, size: 30.sp),
       ),
     );
   }
-
-  /// Schedule Card for Today's Schedule
-  Widget _buildScheduleCard({
-    required bool isCompleted,
-    required String title,
-    required String subtitle,
-    required String time,
-    required String date,
-    bool showOptions = false,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      margin: EdgeInsets.only(bottom: 10.h),
-      decoration: BoxDecoration(
-        color: isCompleted
-            ? Color(0xFF1E3B24) // Dark green for completed tasks
-            : Color(0xFF4A9FB5).withOpacity(0.3), // Light blue for pending tasks
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: isCompleted
-              ? Color(0xFF4CAF50) // Green border for completed
-              : Colors.transparent,
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Checkbox or circle
-          Container(
-            width: 24.w,
-            height: 24.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isCompleted ? Color(0xFF4CAF50) : Colors.transparent,
-              border: Border.all(
-                color: isCompleted ? Colors.transparent : Colors.white,
-                width: 2,
-              ),
-            ),
-            child: isCompleted
-                ? Icon(Icons.check, color: Colors.white, size: 16.sp)
-                : null,
-          ),
-          SizedBox(width: 12.w),
-
-          // Task details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                    color: isCompleted ? Color(0xFF4CAF50) : Colors.white,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.white70,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Row(
-                  children: [
-                    Icon(Icons.access_time, color: Colors.white70, size: 12.sp),
-                    SizedBox(width: 4.w),
-                    Text(
-                      time,
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: Colors.white70,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Icon(Icons.calendar_today, color: Colors.white70, size: 12.sp),
-                    SizedBox(width: 4.w),
-                    Text(
-                      date,
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: Colors.white70,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Options icon (three dots)
-          if (showOptions)
-            Builder(
-              builder: (context) => InkWell(
-                onTap: () {
-                  final RenderBox renderBox = context.findRenderObject() as RenderBox;
-                  final offset = renderBox.localToGlobal(Offset.zero);
-                  _showOptionsMenu(
-                      context,
-                      Offset(offset.dx, offset.dy + 24.h)
-                  );
-                },
-                child: Icon(
-                  Icons.more_horiz,
-                  color: Colors.white,
-                  size: 24.sp,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  /// ✅ Header inside AppBar (Always Visible)
+  ///--------------------------------- Header ---------------------------------------
   Widget _buildHeader() {
     return Padding(
       padding: EdgeInsets.only(top: 0.01.sh),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          /// ✅ Profile Section
           CircleAvatar(
             backgroundImage: AssetImage("assets/images/person.png"),
-            radius: 20.w, // ✅ User Profile Image
+            radius: 20.w,
           ),
           SizedBox(width: 10.w),
-
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -619,38 +601,35 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           Spacer(),
-
-          /// ✅ Icons (Lightning & Notification with Badge)
-          InkWell(
-              onTap: (){
-                Get.toNamed("/upgradePlan");
-              },
-              child: Icon(Icons.bolt, color: buttonColor, size: 30.sp)), // ⚡ Icon
-
-          /// ✅ Notification Icon with Badge
+          SvgPicture.asset(
+            "assets/svg/calander.svg",
+            width: 25.w,
+            height: 25.h,
+            colorFilter: ColorFilter.mode(
+              primaryColor,
+              BlendMode.srcIn,
+            ),
+          ),
           Stack(
             clipBehavior: Clip.none,
             children: [
-              Icon(Icons.notifications_none_outlined,
-                  color: Colors.white, size: 30.sp), // 🔔 Icon
-
-              /// ✅ Notification Badge
+              Icon(Icons.notifications_none_outlined, color: primaryColor, size: 25.sp),
               Positioned(
-                right: -1, // Adjust position
+                right: -1,
                 top: -4,
                 child: Container(
                   padding: EdgeInsets.all(4.w),
                   decoration: BoxDecoration(
-                    color: Colors.red, // Notification Badge Color
+                    color: Colors.red,
                     shape: BoxShape.circle,
                   ),
                   constraints: BoxConstraints(
-                    minWidth: 15.w,
-                    minHeight: 15.w,
+                    minWidth: 12.w,
+                    minHeight: 12.w,
                   ),
                   child: Center(
                     child: Text(
-                      "3", // ✅ Dynamic Notification Count
+                      "3",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 10.sp,
@@ -666,173 +645,686 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  /// ✅ Daily Goals Section
-  Widget _buildDailyGoals() {
+  ///--------------------------------- Task Card ---------------------------------------
+  Widget _buildAnyTimeTasks() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Daily Goals",
-            style: TextStyle(
-                fontSize: 24.sp,
-                color: textColor,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Philosopher')),
+        TitleWithViewAll(
+          title: "Any Time Tasks",
+          showViewAll: false, // Show the "View All" option
+        ),
         SizedBox(height: 10.h),
-        _buildGoalCard("Daily Meditation", 70),
-        _buildGoalCard("Daily Workout", 50),
-        _buildGoalCard("Reading", 60),
+        _buildTaskCard(
+          title: "Read A Chapter Of Your Book",
+          subtitle: "Personal Development",
+          showOptions: false,
+          initialCompleted: true, // Ensure true branch is reachable
+        ),
+        _buildTaskCard(
+          title: "Drink 8 Glasses Of Water",
+          subtitle: "Stay Hydrated",
+          showOptions: true,
+        ),
+        _buildTaskCard(
+          title: "Meditate For 10 Minutes",
+          subtitle: "Focus On Breathing",
+          showOptions: true,
+        ),
       ],
     );
   }
-
-  Widget _buildGoalCard(String title, double initialProgress) {
+  Widget _buildTaskCard({
+    required String title,
+    required String subtitle,
+    bool showOptions = false,
+    bool initialCompleted = false,
+  }) {
     return StatefulBuilder(
       builder: (context, setState) {
-        double progress = initialProgress;
-        return Container(
-          padding: EdgeInsets.all(16.w),
-          margin: EdgeInsets.only(bottom: 10.h),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        bool isCompleted = initialCompleted;
+        final checkmarkColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
+        final borderColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
+        final titleTextColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
+        final subtitleTextColor = isCompleted ? Color(0xFFAAAAAA) : Colors.white;
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              isCompleted = !isCompleted;
+            });
+          },
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                        fontSize: 20.sp,
-                        color: Colors.white,
-                        fontFamily: 'Philosopher'),
+              // Left indicator Container
+              Container(
+                width: 10.w,
+                height: 0.1.sh,
+                padding: EdgeInsets.all(16.w),
+                margin: EdgeInsets.only(bottom: 10.h),
+                decoration: BoxDecoration(
+                  color: isCompleted ? borderColor2 : Colors.transparent,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12.r),
+                    bottomLeft: Radius.circular(12.r),
                   ),
-                  Spacer(),
-                  Text(
-                    "${progress.toInt()}%",
-                    style: TextStyle(
-                        color: textColor,
-                        fontSize: 16.sp,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600),
+                  border: Border.all(
+                    color: isCompleted ? Colors.transparent : buttonColor,
+                    width: 1,
                   ),
-                ],
-              ),
-              Text(
-                "30 Days",
-                style: TextStyle(
-                    fontSize: 10.sp,
-                    color: const Color(0xffAAAAAA),
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w400),
-              ),
-              SizedBox(height: 8.h),
+                ),
 
-              /// ✅ Slider instead of LinearProgressIndicator
-              LinearProgressIndicator(
-                borderRadius: BorderRadius.circular(10.r),
-                value: progress / 100,
-                backgroundColor: Colors.white30,
-                color: titleColor,
-                minHeight: 8.h,
               ),
-              // Slider(value: progress, onChanged: (value) {}),
-              /* Slider(
-                value: progress,
-                min: 0,
-                max: 100,
-                activeColor: titleColor,
-                inactiveColor: Colors.white30,
-                onChanged: (value) {
-                  setState(() {
-                    progress = value;
-                  });
-                },
-              ),*/
-
+              // Main Container
+              Expanded( // Take remaining width
+                child: Container(
+                  padding: EdgeInsets.all(16.w),
+                  margin: EdgeInsets.only(bottom: 10.h),
+                  height: 0.1.sh,
+                  decoration: BoxDecoration(
+                    color: isCompleted ? Colors.transparent : buttonColor,
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(12.r),
+                      bottomRight: Radius.circular(12.r),
+                    ),
+                    border: Border.all(
+                      color: borderColor,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Checkbox Container
+                      Container(
+                        width: 24.w,
+                        height: 24.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: checkmarkColor,
+                          border: Border.all(
+                            color: isCompleted ? Colors.transparent : Colors.white,
+                            width: 2,
+                          ),
+                        ),
+                        child: isCompleted
+                            ? Icon(Icons.check, color: Colors.white, size: 16.sp)
+                            : null,
+                      ),
+                      SizedBox(width: 12.w),
+                      // Task details
+                      Expanded( // Push options to the right
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 1.sw,
+                              height: 0.035.sh,
+                              child: Text(
+                                title,
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: titleTextColor,
+                                  fontFamily: 'Philosopher',
+                                ),
+                              ),
+                            ),
+                            Text(
+                              subtitle,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: subtitleTextColor,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Options icon at the end
+                      if (showOptions)
+                        Builder(
+                          builder: (context) => InkWell(
+                            onTap: () {
+                              final RenderBox renderBox = context.findRenderObject() as RenderBox;
+                              final position = renderBox.localToGlobal(Offset.zero);
+                              final size = renderBox.size;
+                              _showOptionsMenu(context, position, size);
+                            },
+                            child: Icon(
+                              Icons.more_vert,
+                              color: Colors.white,
+                              size: 24.sp,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         );
       },
     );
   }
-
-  /// ✅ AI Daily Tasks Section
-  Widget _buildDailyTasks() {
+  ///--------------------------------- Schedule Card ---------------------------------------
+  Widget _buildTodaySchedule() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("AI Daily Task",
-            style: TextStyle(
-                fontSize: 24.sp,
-                color: textColor,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Philosopher')),
+        TitleWithViewAll(
+          title: "Today's Schedule",
+          showViewAll: false, // Show the "View All" option
+        ),
         SizedBox(height: 10.h),
-        _buildTaskItem("Breakfast", "08:00 AM"),
-        _buildTaskItem("Workout", "06:00 PM"),
-        _buildTaskItem("Marketing", "02:00 PM"),
+        _buildScheduleCard(
+          title: "Team Meeting",
+          subtitle: "Discuss Project Timeline",
+          time: "9:00 AM",
+          date: "02.10.2024",
+          showOptions: false,
+          initialCompleted: true, // Ensure true branch is reachable
+        ),
+        _buildScheduleCard(
+          title: "Lunch With Sarah",
+          subtitle: "At Cafe Milano",
+          time: "1:00 PM",
+          date: "02.10.2024",
+          showOptions: false,
+          initialCompleted: true, // Ensure true branch is reachable
+        ),
+        _buildScheduleCard(
+          title: "Evening Reflection",
+          subtitle: "Journal About Your Day",
+          time: "8:00 PM",
+          date: "02.10.2024",
+          showOptions: true,
+        ),
       ],
     );
   }
+  Widget _buildScheduleCard({
+    required String title,
+    required String subtitle,
+    required String time,
+    required String date,
+    bool showOptions = false,
+    bool initialCompleted = false,
+  }) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        bool isCompleted = initialCompleted;
+        final checkmarkColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
+        final borderColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
+        final titleTextColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
+        final svgIconColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
+        final subtitleTextColor = isCompleted ? Color(0xFFAAAAAA) : Colors.white;
 
-  Widget _buildTaskItem(String title, String time) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-      margin: EdgeInsets.only(bottom: 8.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            spreadRadius: 1,
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              isCompleted = !isCompleted;
+            });
+          },
+          child: Row(
             children: [
-              Icon(Icons.radio_button_checked,
-                  color: buttonColor, size: 18.sp),
-              SizedBox(width: 10.w),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: TextStyle(fontSize: 14.sp, color: Colors.black)),
-                  Text(time,
-                      style: TextStyle(fontSize: 12.sp, color: Colors.black54)),
-                ],
+              // Left indicator Container
+              Container(
+                padding: EdgeInsets.all(16.w),
+                margin: EdgeInsets.only(bottom: 10.h),
+                width: 10.w,
+                height: 0.12.sh,
+                decoration: BoxDecoration(
+                  color: isCompleted ? borderColor2 : Colors.transparent,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12.r),
+                    bottomLeft: Radius.circular(12.r),
+                  ),
+                  border: Border.all(
+                    color: isCompleted ? Colors.transparent : buttonColor,
+                    width: 1,
+                  ),
+                ),
+              ),
+              // Main Container
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.all(10.w),
+                  margin: EdgeInsets.only(bottom: 10.h),
+                  height: 0.12.sh,
+                  decoration: BoxDecoration(
+                    color: isCompleted ? Colors.transparent : buttonColor,
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(12.r),
+                      bottomRight: Radius.circular(12.r),
+                    ),
+                    border: Border.all(
+                      color: borderColor,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Checkbox Container
+                      Container(
+                        width: 24.w,
+                        height: 24.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: checkmarkColor,
+                          border: Border.all(
+                            color: isCompleted ? Colors.transparent : Colors.white,
+                            width: 2,
+                          ),
+                        ),
+                        child: isCompleted
+                            ? Icon(Icons.check, color: Colors.white, size: 16.sp)
+                            : null,
+                      ),
+                      SizedBox(width: 12.w),
+                      // Task details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 1.sw,
+                              height: 0.03.sh,
+                              child: Text(
+                                title,
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: titleTextColor,
+                                  fontFamily: 'Philosopher',
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 5.h),
+                            Text(
+                              subtitle,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: subtitleTextColor,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Row(
+                              children: [
+                                SvgPicture.asset("assets/svg/time.svg", width: 14.w, height: 14.h,colorFilter: ColorFilter.mode(svgIconColor, BlendMode.srcIn),),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  time,
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    color: subtitleTextColor,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                SvgPicture.asset("assets/svg/calander.svg", width: 14.w, height: 14.h,colorFilter: ColorFilter.mode(svgIconColor, BlendMode.srcIn),),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  date,
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    color: subtitleTextColor,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Options icon at the end
+                      if (showOptions)
+                        Builder(
+                          builder: (context) => InkWell(
+                            onTap: () {
+                              final RenderBox renderBox = context.findRenderObject() as RenderBox;
+                              final position = renderBox.localToGlobal(Offset.zero);
+                              final size = renderBox.size;
+                              _showOptionsMenu(context, position, size);
+                            },
+                            child: Icon(
+                              Icons.more_vert,
+                              color: Colors.white,
+                              size: 24.sp,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
-          Builder(
-            builder: (context) => InkWell(
-              onTap: () {
-                final RenderBox renderBox = context.findRenderObject() as RenderBox;
-                final offset = renderBox.localToGlobal(Offset.zero);
-                _showOptionsMenu(
-                    context,
-                    Offset(offset.dx, offset.dy + 24.h)
-                );
-              },
-              child: Icon(Icons.more_horiz, color: Colors.black),
-            ),
+        );
+      },
+    );
+  }
+  ///--------------------------------- Today's Goal Card ---------------------------------------
+  Widget _buildTodayGoalTask() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TitleWithViewAll(
+          title: "Today's Goal Task",
+          showViewAll: true, // Show the "View All" option
+        ),
+        SizedBox(height: 10.h),
+        _buildTodaysGoalCard(
+          title: "Morning Workout",
+          subtitle: "Goal : Lose 10 Lbs",
+          time: "9:00 AM",
+          showOptions: false,
+          initialCompleted: true, // Ensure true branch is reachable
+        ),
+        _buildTodaysGoalCard(
+          title: "Study Programming",
+          subtitle: "Goal : Get A Tech Job",
+          time: "1:00 PM",
+          showOptions: false,
+          initialCompleted: true, // Ensure true branch is reachable
+        ),
+        _buildTodaysGoalCard(
+          title: "Meal Prep For The Week",
+          subtitle: "Goal : Lose 10 Lbs",
+          time: "8:00 PM",
+          showOptions: true,
+        ),
+      ],
+    );
+  }
+  Widget _buildTodaysGoalCard({
+    required String title,
+    required String subtitle,
+    required String time,
+    bool showOptions = false,
+    bool initialCompleted = false,
+  }) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        bool isCompleted = initialCompleted;
+        final checkmarkColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
+        final borderColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
+        final titleTextColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
+        final svgIconColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
+        final subtitleTextColor = isCompleted ? Color(0xFFAAAAAA) : Colors.white;
+
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              isCompleted = !isCompleted;
+            });
+          },
+          child: Row(
+            children: [
+              // Left indicator Container
+              Container(
+                padding: EdgeInsets.all(16.w),
+                margin: EdgeInsets.only(bottom: 10.h),
+                width: 10.w,
+                height: 0.12.sh,
+                decoration: BoxDecoration(
+                  color: isCompleted ? borderColor2 : Colors.transparent,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12.r),
+                    bottomLeft: Radius.circular(12.r),
+                  ),
+                  border: Border.all(
+                    color: isCompleted ? Colors.transparent : buttonColor,
+                    width: 1,
+                  ),
+                ),
+              ),
+              // Main Container
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.all(10.w),
+                  margin: EdgeInsets.only(bottom: 10.h),
+                  height: 0.12.sh,
+                  decoration: BoxDecoration(
+                    color: isCompleted ? Colors.transparent : buttonColor,
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(12.r),
+                      bottomRight: Radius.circular(12.r),
+                    ),
+                    border: Border.all(
+                      color: borderColor,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Checkbox Container
+                      Container(
+                        width: 24.w,
+                        height: 24.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: checkmarkColor,
+                          border: Border.all(
+                            color: isCompleted ? Colors.transparent : Colors.white,
+                            width: 2,
+                          ),
+                        ),
+                        child: isCompleted
+                            ? Icon(Icons.check, color: Colors.white, size: 16.sp)
+                            : null,
+                      ),
+                      SizedBox(width: 12.w),
+                      // Task details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 1.sw,
+                              height: 0.03.sh,
+                              child: Text(
+                                title,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: titleTextColor,
+                                  fontFamily: 'Philosopher',
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 5.h),
+                            Text(
+                              subtitle,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: subtitleTextColor,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Row(
+                              children: [
+                                SvgPicture.asset("assets/svg/time.svg", width: 14.w, height: 14.h,colorFilter: ColorFilter.mode(svgIconColor, BlendMode.srcIn),),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  time,
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    color: subtitleTextColor,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                          ],
+                        ),
+                      ),
+                      // Options icon at the end
+                      if (showOptions)
+                        Builder(
+                          builder: (context) => InkWell(
+                            onTap: () {
+                              final RenderBox renderBox = context.findRenderObject() as RenderBox;
+                              final position = renderBox.localToGlobal(Offset.zero);
+                              final size = renderBox.size;
+                              _showOptionsMenuForGoal(context, position, size);
+                            },
+                            child: Icon(
+                              Icons.more_vert,
+                              color: Colors.white,
+                              size: 24.sp,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
+    );
+  }
+///--------------------------------- Daily Goals Card ---------------------------------------
+  Widget _buildDailyGoals() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TitleWithViewAll(
+          title: "Goals Progress",
+          showViewAll: true, // Show the "View All" option
+        ),
+        SizedBox(height: 10.h),
+        _buildGoalCard("Lose 10 Lbs", 70),
+        _buildGoalCard("Get A Tech Job", 20),
+      ],
+    );
+  }
+  Widget _buildGoalCard(String title, double initialProgress) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        double progress = initialProgress;
+        return Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(12.w),
+              margin: EdgeInsets.only(bottom: 10.h),
+              width: 10.w,
+              height: 0.13.sh,
+              decoration: BoxDecoration(
+                color:  Colors.transparent ,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12.r),
+                  bottomLeft: Radius.circular(12.r),
+                ),
+                border: Border.all(
+                  color:  borderColor,
+                  width: 1,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Container(
+                height: 0.13.sh,
+                padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 15.h),
+                margin: EdgeInsets.only(bottom: 10.h),
+                decoration: BoxDecoration(
+                  color: buttonColor,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(12.r),
+                    bottomRight: Radius.circular(12.r),
+                  ),
+                  border: Border.all(
+                    color: borderColor,
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 20.sp,
+                            color: Colors.white,
+                            fontFamily: 'Philosopher',
+                          ),
+                        ),
+                        Spacer(),
+                        Text(
+                          "${progress.toInt()}%",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8.h),
+                    // Animated Progress Bar
+                    TweenAnimationBuilder(
+                      tween: Tween<double>(begin: 0, end: progress),
+                      duration: Duration(seconds: 1),
+                      builder: (context, value, child) {
+                        return LinearProgressIndicator(
+                          value: value / 100,
+                          backgroundColor: Color(0xFF1C2A45), // Light blue background color
+                          color: Colors.white, // Dark blue progress color
+                          minHeight: 8.h,
+                          borderRadius: BorderRadius.circular(10.r),
+                        );
+                      },
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Consistency: 80%",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.white,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            // Add action for viewing tasks
+                          },
+                          child: Text(
+                            "View Tasks",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: subTextColor2,
+                              fontWeight: FontWeight.w600,// Light purple color
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
-
-/// ✅ Persistent Header Delegate for Date Selector (Hides on Scroll)
+///--------------------------------- Sliver Date Selector Delegate ---------------------------------------
 class _SliverDateSelectorDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final double height;
@@ -846,19 +1338,16 @@ class _SliverDateSelectorDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => height;
 
   @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Material(
       color: backgroundColor,
       elevation: shrinkOffset > 0 ? 2.0 : 0.0,
       child: child,
     );
   }
-/*  @override
-  bool shouldRebuild(_SliverDateSelectorDelegate oldDelegate) => false;*/
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
-    return true; // Rebuild if the delegate changes
+    return true;
   }
 }

@@ -5,8 +5,8 @@ import '../../../controller/buttom_navigation_controller.dart';
 import '../../../themes/colors.dart';
 import '../../home/page/home_page.dart';
 import '../../setting/pages/setting_page.dart';
+import '../../task/page/task_page.dart';
 import '../widgets/custom_navigation_bar.dart';
-
 
 class MainScreen extends StatelessWidget {
   MainScreen({super.key});
@@ -15,28 +15,28 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      /// ✅ Wrap `Scaffold` in GetBuilder to ensure updates
-      body: GetBuilder<BottomNavController>(
-        builder: (controller) {
-          return _getPage(controller.selectedIndex);
-        },
-      ),
-      /// ✅ Custom Bottom Navigation Bar
-      bottomNavigationBar: CustomBottomNavBar(navController: navController),
+    return GetBuilder<BottomNavController>(
+      builder: (controller) {
+        return Scaffold(
+          backgroundColor: controller.selectedIndex == 0 || controller.selectedIndex == 1
+              ? backgroundColor
+              : Colors.white,
+          body: _getPage(controller.selectedIndex),
+          bottomNavigationBar: CustomBottomNavBar(navController: navController),
+        );
+      },
     );
   }
 
-  /// ✅ Function to Return the Correct Page
+  /// Function to Return the Correct Page
   Widget _getPage(int index) {
     switch (index) {
       case 0:
         return HomePage();
       case 1:
-        return HomePage();
+        return TaskPage();
       case 2:
-        return ChatBotScreen(); // Replace with Profile Page
+        return ChatBotScreen();
       case 3:
         return SettingsScreen();
       default:

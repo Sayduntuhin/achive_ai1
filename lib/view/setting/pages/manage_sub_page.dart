@@ -54,7 +54,9 @@ class ManageSubscriptionScreen extends StatelessWidget {
             /// ✅ Update Button
            CustomButton(
               text: "Update Subscription",
-              onPressed: () {},
+              onPressed: () {
+                Get.toNamed("/upgradePlan");
+              },
              backgroundColor: buttonColor,
             ),
 

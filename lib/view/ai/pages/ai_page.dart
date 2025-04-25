@@ -67,11 +67,11 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          "Achieve AI",
+          "MyPerfectLife Ai",
           style: TextStyle(
             fontSize: 24.sp,
             fontWeight: FontWeight.w700,
-            color: titleColor,
+            color: titleColor2,
             fontFamily: "Philosopher",
           ),
         ),
@@ -157,10 +157,10 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
         color: isUser ? Colors.grey[300] : Colors.blue[200],
       ),
       child: Center(
-        child: Icon(
-          isUser ? Icons.person : Icons.emoji_emotions,
-          size: 18.w,
-          color: isUser ? Colors.grey[700] : Colors.blue[700],
+        child: Image.asset(
+          isUser ? "assets/images/person.png" : "assets/images/ai_avatar.png",
+          width: 32.w,
+          height: 32.h,
         ),
       ),
     );
@@ -199,21 +199,10 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
   Widget _buildMessageInput() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            spreadRadius: 0,
-            offset: Offset(0, -1),
-          ),
-        ],
-      ),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: Color(0xffD1D5DB),
           borderRadius: BorderRadius.circular(25.r),
         ),
         child: Row(
@@ -223,24 +212,17 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
                 controller: _messageController,
                 decoration: InputDecoration(
                   hintText: "Write a message...",
-                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  hintStyle: TextStyle(color: textColor2),
                   border: InputBorder.none,
                 ),
               ),
             ),
             GestureDetector(
               onTap: _sendMessage,
-              child: Container(
-                padding: EdgeInsets.all(10.w),
-                decoration: BoxDecoration(
-                  color: Colors.blue[600],
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.send_rounded,
-                  color: Colors.white,
-                  size: 20.w,
-                ),
+              child: SvgPicture.asset(
+                "assets/svg/chat_button.svg",
+                width: 40.w,
+                height: 40.h,
               ),
             ),
           ],
