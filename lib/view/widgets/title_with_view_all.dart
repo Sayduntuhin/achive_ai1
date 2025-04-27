@@ -31,23 +31,24 @@ class TitleWithViewAll extends StatelessWidget {
         Spacer(),
         // View All Section (Only shown if showViewAll is true)
         if (showViewAll)
-          Row(
-            children: [
-              Text(
+          GestureDetector(
+            onTap: () {
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
+              decoration: BoxDecoration(
+                color:flortingButtonColor,
+                borderRadius: BorderRadius.circular(5.r),
+              ),
+              child: Text(
                 viewAllText, // Use custom text here
                 style: TextStyle(
-                  fontSize: 10.sp,
-                  color: subTextColor2, // You can replace with your `subTextColor2`
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins',
+                  color: Color(0xff1C2A45),
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              Icon(
-                Icons.arrow_right_alt_rounded,
-                color: subTextColor2, // You can replace with your `subTextColor2`
-                size: 16.sp,
-              ),
-            ],
+            ),
           ),
       ],
     );

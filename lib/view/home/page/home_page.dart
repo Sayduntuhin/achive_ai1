@@ -5,26 +5,47 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../widgets/title_with_view_all.dart';
+import '../../../controller/calander_controller.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
+
 class _HomePageState extends State<HomePage> {
-  // Variables for task inputs
   final TextEditingController _taskNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  String _taskType = 'Any Time'; // Default task type
+  String _selectedGoal = ""; // To store the selected goal
+  String _taskType = "Any Time"; // Default task type, can be removed if no longer needed.
+
+  final List<String> goalOptions = [
+    "Eat a Healthy Diet",
+    "Exercise Daily",
+    "Get Enough Sleep",
+    "Complete a Course",
+    // Add more goals as needed
+  ];
+
   @override
   void initState() {
     super.initState();
+    Get.put(CalendarController());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowDisclaimerDialog();
     });
   }
-  ///--------------------------------- Disclaimer Dialog ---------------------------------------
+
+  @override
+  void dispose() {
+    _taskNameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  // Disclaimer Dialog Methods
   Future<void> _checkAndShowDisclaimerDialog() async {
     final prefs = await SharedPreferences.getInstance();
     final hasShownDisclaimer = prefs.getBool('hasShownDisclaimer') ?? false;
@@ -34,6 +55,7 @@ class _HomePageState extends State<HomePage> {
       await prefs.setBool('hasShownDisclaimer', true);
     }
   }
+
   void _showDisclaimerDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -128,6 +150,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
   Widget _bulletPoint(String text) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,114 +169,16 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
-  ///--------------------------------- Options Menu ---------------------------------------
-  void _showOptionsMenu(BuildContext context, Offset position, Size size) {
-    showMenu(
-      context: context,
-      position: RelativeRect.fromLTRB(
-        position.dx,
-        position.dy+ 10.h,
-        position.dx - 0.75.sw,
-        position.dy ,
 
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      color: Colors.white,
-      constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
-      items: [
-        PopupMenuItem(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          height: 0.04.sh,
-          child: Row(
-            children: [
-              Icon(Icons.access_time, color: textColor, size: 18.sp),
-              SizedBox(width: 5.w),
-              Text(
-                "Add To Schedule",
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 10.sp,
-                  fontFamily: 'Poppins',
-                ),
-              ),
-            ],
-          ),
-          onTap: () {
-            // Add your logic for adding to schedule
-          },
-        ),
-        PopupMenuItem(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          height: 0.04.sh,
-          child: Row(
-            children: [
-              Icon(Icons.delete_outline, color: Color(0xFFFF5A5A), size: 18.sp),
-              SizedBox(width: 5.w),
-              Text(
-                "Cancel Task",
-                style: TextStyle(
-                  color: Color(0xFFFF5A5A),
-                  fontSize: 10.sp,
-                  fontFamily: 'Poppins',
-                ),
-              ),
-            ],
-          ),
-          onTap: () {
-            // Add your logic for canceling task
-          },
-        ),
-      ],
-    );
-  }
-  void _showOptionsMenuForGoal(BuildContext context, Offset position, Size size) {
-    showMenu(
-      context: context,
-      position: RelativeRect.fromLTRB(
-        position.dx,
-        position.dy+ 10.h,
-        position.dx - 0.75.sw,
-        position.dy ,
-
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      color: Colors.white,
-      constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
-      items: [
-        PopupMenuItem(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          height: 0.04.sh,
-          child: Row(
-            children: [
-              Icon(Icons.delete_outline, color: Color(0xFFFF5A5A), size: 18.sp),
-              SizedBox(width: 5.w),
-              Text(
-                "Cancel Task",
-                style: TextStyle(
-                  color: Color(0xFFFF5A5A),
-                  fontSize: 10.sp,
-                  fontFamily: 'Poppins',
-                ),
-              ),
-            ],
-          ),
-          onTap: () {
-            // Add your logic for canceling task
-          },
-        ),
-      ],
-    );
-  }
-  ///--------------------------------- Open Task Dialog ---------------------------------------
+  // Open Task Dialog
   void _openTaskDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
+        // Fetch the primary color from the theme
+        Color primaryColor = Theme.of(context).primaryColor;
+
         return StatefulBuilder(
           builder: (context, setState) {
             return Dialog(
@@ -269,7 +194,6 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Header and close button
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -291,16 +215,12 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-
-                    // Make the rest of the content scrollable
                     Flexible(
                       child: SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(height: 15.h),
-
-                            // Task Name
                             Text(
                               "Task Name",
                               style: TextStyle(
@@ -325,8 +245,6 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                             SizedBox(height: 15.h),
-
-                            // Description
                             Text(
                               "Description",
                               style: TextStyle(
@@ -341,7 +259,7 @@ class _HomePageState extends State<HomePage> {
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide(color: Colors.grey),
+                                  borderSide: BorderSide(color: primaryColor),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10.r),
@@ -354,10 +272,8 @@ class _HomePageState extends State<HomePage> {
                               maxLines: 3,
                             ),
                             SizedBox(height: 15.h),
-
-                            // Task Type
                             Text(
-                              "Task Type",
+                              "Related Goal",
                               style: TextStyle(
                                 fontSize: 16.sp,
                                 color: primaryColor,
@@ -365,122 +281,120 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                             SizedBox(height: 5.h),
-                            Row(
-                              children: [
-                                Radio(
-                                  value: "Any Time",
-                                  groupValue: _taskType,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _taskType = value.toString();
-                                    });
-                                  },
-                                  activeColor: Color(0xFF4BAFDA),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.grey,
                                 ),
-                                Text("Any Time"),
-                                SizedBox(width: 20.w),
-                                Radio(
-                                  value: "Scheduled Task",
-                                  groupValue: _taskType,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _taskType = value.toString();
-                                    });
-                                  },
-                                  activeColor: Color(0xFF4BAFDA),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: DropdownButton<String>(
+                                borderRadius: BorderRadius.circular(10.r),
+                                isExpanded: true,
+                                value: _selectedGoal.isEmpty ? null : _selectedGoal,
+                                hint: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 15.w),
+                                  child: Text("Eat a Healthy Diet", style: TextStyle(color: Colors.grey)),
                                 ),
-                                Text("Scheduled Task"),
-                              ],
+                                items: goalOptions.map((String goal) {
+                                  return DropdownMenuItem<String>(
+                                    value: goal,
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 15.w),
+                                      child: Text(goal),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _selectedGoal = newValue!;
+                                  });
+                                },
+                              ),
                             ),
                             SizedBox(height: 15.h),
-
-                            // Date fields for Scheduled Task
-                            if (_taskType == "Scheduled Task")
-                              Column(
-                                children: [
-                                  Row(
+                            // Date and Time Fields in a Row
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Date Of Task",
-                                              style: TextStyle(
-                                                fontSize: 12.sp,
-                                                fontFamily: 'Poppins',
-                                                color: Color(0xFF4BAFDA),
-                                              ),
-                                            ),
-                                            SizedBox(height: 5.h),
-                                            TextField(
-                                              decoration: InputDecoration(
-                                                border: OutlineInputBorder(
-                                                  borderRadius: BorderRadius.circular(10.r),
-                                                  borderSide: BorderSide(color: Colors.grey),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                  borderSide: BorderSide(color: primaryColor),
-                                                ),
-                                                contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
-                                                hintText: "mm/dd/yy",
-                                                suffixIcon: Icon(Icons.calendar_today, size: 20.sp),
-                                              ),
-                                            ),
-                                          ],
+                                      Text(
+                                        "Date Of Task",
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          fontFamily: 'Poppins',
+                                          color: primaryColor,
                                         ),
                                       ),
-                                      SizedBox(width: 10.w),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Time Of Task",
-                                              style: TextStyle(
-                                                fontSize: 12.sp,
-                                                fontFamily: 'Poppins',
-                                                color: Color(0xFF4BAFDA),
-                                              ),
-                                            ),
-                                            SizedBox(height: 5.h),
-                                            TextField(
-                                              decoration: InputDecoration(
-                                                border: OutlineInputBorder(
-                                                  borderRadius: BorderRadius.circular(10.r),
-                                                  borderSide: BorderSide(color: Colors.grey),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderRadius: BorderRadius.circular(10),
-                                                  borderSide: BorderSide(color: primaryColor),
-                                                ),
-                                                contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
-                                                hintText: "--:--:--",
-                                                suffixIcon: Icon(Icons.access_time, size: 20.sp),
-                                              ),
-                                            ),
-                                          ],
+                                      SizedBox(height: 5.h),
+                                      TextField(
+                                        decoration: InputDecoration(
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10.r),
+                                            borderSide: BorderSide(color: Colors.grey),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(color: primaryColor),
+                                          ),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+                                          hintText: "mm/dd/yy",
+                                          hintStyle: TextStyle(color: primaryColor),
+
+                                          suffixIcon: Icon(Icons.calendar_today, color: primaryColor, size: 20.sp),
                                         ),
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
+                                ),
+                                SizedBox(width: 10.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Time Of Task",
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          fontFamily: 'Poppins',
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                      SizedBox(height: 5.h),
+                                      TextField(
+                                        decoration: InputDecoration(
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10.r),
+                                            borderSide: BorderSide(color: Colors.grey),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(color: primaryColor),
+                                          ),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+                                          hintText: "--:--:--",
+                                          hintStyle: TextStyle(color: primaryColor),
+                                          suffixIcon: Icon(Icons.access_time, size: 20.sp,color:primaryColor   ,),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                             SizedBox(height: 20.h),
-
-                            // Add Task button
                             Center(
                               child: Container(
                                 width: 0.5.sw,
                                 height: 0.05.sh,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    // Handle task addition logic here
                                     Navigator.pop(context);
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor:primaryColor,
+                                    backgroundColor: primaryColor, // Using primary color here
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10.r),
                                     ),
@@ -509,64 +423,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-  ///--------------------------------- Build Method ---------------------------------------
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: backgroundColor,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            title: _buildHeader(),
-            backgroundColor: backgroundColor,
-            expandedHeight: 0.08.sh,
-            floating: false,
-            pinned: true,
-            automaticallyImplyLeading: false,
-          ),
-          SliverPersistentHeader(
-            pinned: false,
-            delegate: _SliverDateSelectorDelegate(
-              child: CalendarWidget(),
-              height: 80.h,
-            ),
-          ),
-          SliverList(
-            delegate: SliverChildListDelegate([
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildAnyTimeTasks(),
-                    SizedBox(height: 20.h),
-                    _buildTodaySchedule(),
-                    SizedBox(height: 20.h),
-                    _buildTodayGoalTask(),
-                    SizedBox(height: 20.h),
-                    _buildDailyGoals(),
-                    SizedBox(height: 50.h),
-                  ],
-                ),
-              ),
-            ]),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50.r),
-        ),
-        backgroundColor: flortingButtonColor,
-        onPressed: () {
-          _openTaskDialog();
-        },
-        child: Icon(Icons.add, color: Colors.white, size: 30.sp),
-      ),
-    );
-  }
-  ///--------------------------------- Header ---------------------------------------
+  // Header
   Widget _buildHeader() {
     return Padding(
       padding: EdgeInsets.only(top: 0.01.sh),
@@ -645,21 +502,23 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-  ///--------------------------------- Task Card ---------------------------------------
+
+  // Task Card
   Widget _buildAnyTimeTasks() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TitleWithViewAll(
           title: "Any Time Tasks",
-          showViewAll: false, // Show the "View All" option
+          showViewAll: true,
+          viewAllText: "Missed Task",
         ),
         SizedBox(height: 10.h),
         _buildTaskCard(
           title: "Read A Chapter Of Your Book",
           subtitle: "Personal Development",
           showOptions: false,
-          initialCompleted: true, // Ensure true branch is reachable
+          initialCompleted: true,
         ),
         _buildTaskCard(
           title: "Drink 8 Glasses Of Water",
@@ -674,6 +533,7 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
+
   Widget _buildTaskCard({
     required String title,
     required String subtitle,
@@ -683,10 +543,10 @@ class _HomePageState extends State<HomePage> {
     return StatefulBuilder(
       builder: (context, setState) {
         bool isCompleted = initialCompleted;
-        final checkmarkColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
-        final borderColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
-        final titleTextColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
-        final subtitleTextColor = isCompleted ? Color(0xFFAAAAAA) : Colors.white;
+        final checkmarkColor = isCompleted ? const Color(0xFF088408) : Colors.transparent;
+        final borderColor = isCompleted ? const Color(0xFF088408) : Colors.transparent;
+        final titleTextColor = isCompleted ? const Color(0xFF088408) : const Color(0xff1C2A45);
+        final subtitleTextColor = isCompleted ? const Color(0xFFAAAAAA) : Colors.white;
 
         return GestureDetector(
           onTap: () {
@@ -696,7 +556,6 @@ class _HomePageState extends State<HomePage> {
           },
           child: Row(
             children: [
-              // Left indicator Container
               Container(
                 width: 10.w,
                 height: 0.1.sh,
@@ -713,10 +572,8 @@ class _HomePageState extends State<HomePage> {
                     width: 1,
                   ),
                 ),
-
               ),
-              // Main Container
-              Expanded( // Take remaining width
+              Expanded(
                 child: Container(
                   padding: EdgeInsets.all(16.w),
                   margin: EdgeInsets.only(bottom: 10.h),
@@ -734,10 +591,9 @@ class _HomePageState extends State<HomePage> {
                   ),
                   child: Row(
                     children: [
-                      // Checkbox Container
                       Container(
-                        width: 24.w,
-                        height: 24.w,
+                        width: 30.w,
+                        height: 30.w,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: checkmarkColor,
@@ -751,8 +607,7 @@ class _HomePageState extends State<HomePage> {
                             : null,
                       ),
                       SizedBox(width: 12.w),
-                      // Task details
-                      Expanded( // Push options to the right
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -780,22 +635,63 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                       ),
-                      // Options icon at the end
                       if (showOptions)
-                        Builder(
-                          builder: (context) => InkWell(
-                            onTap: () {
-                              final RenderBox renderBox = context.findRenderObject() as RenderBox;
-                              final position = renderBox.localToGlobal(Offset.zero);
-                              final size = renderBox.size;
-                              _showOptionsMenu(context, position, size);
-                            },
-                            child: Icon(
-                              Icons.more_vert,
-                              color: Colors.white,
-                              size: 24.sp,
+                        PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert, color: Colors.white, size: 24.sp),
+                          onSelected: (value) {
+                            if (value == 'schedule') {
+                              print('Add to schedule selected');
+                              // Add your schedule logic here
+                            } else if (value == 'cancel') {
+                              print('Cancel task selected');
+                              // Add your cancel logic here
+                            }
+                          },
+                          itemBuilder: (BuildContext context) => [
+                            PopupMenuItem(
+                              value: 'schedule',
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                              height: 40.h,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.access_time, color: textColor, size: 18.sp),
+                                  SizedBox(width: 5.w),
+                                  Text(
+                                    "Add To Schedule",
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontSize: 10.sp,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                            PopupMenuItem(
+                              value: 'cancel',
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                              height: 40.h,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete_outline, color: const Color(0xFFFF5A5A), size: 18.sp),
+                                  SizedBox(width: 5.w),
+                                  Text(
+                                    "Cancel Task",
+                                    style: TextStyle(
+                                      color: const Color(0xFFFF5A5A),
+                                      fontSize: 10.sp,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.r),
                           ),
+                          color: Colors.white,
+                          constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
                         ),
                     ],
                   ),
@@ -807,42 +703,44 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-  ///--------------------------------- Schedule Card ---------------------------------------
+
+  // Schedule Card
   Widget _buildTodaySchedule() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TitleWithViewAll(
           title: "Today's Schedule",
-          showViewAll: false, // Show the "View All" option
+          showViewAll: false,
         ),
         SizedBox(height: 10.h),
         _buildScheduleCard(
           title: "Team Meeting",
           subtitle: "Discuss Project Timeline",
-          time: "9:00 AM",
+          time: "9am",
           date: "02.10.2024",
           showOptions: false,
-          initialCompleted: true, // Ensure true branch is reachable
+          initialCompleted: true,
         ),
         _buildScheduleCard(
           title: "Lunch With Sarah",
           subtitle: "At Cafe Milano",
-          time: "1:00 PM",
+          time: "1pm",
           date: "02.10.2024",
           showOptions: false,
-          initialCompleted: true, // Ensure true branch is reachable
+          initialCompleted: true,
         ),
         _buildScheduleCard(
           title: "Evening Reflection",
           subtitle: "Journal About Your Day",
-          time: "8:00 PM",
+          time: "8pm",
           date: "02.10.2024",
           showOptions: true,
         ),
       ],
     );
   }
+
   Widget _buildScheduleCard({
     required String title,
     required String subtitle,
@@ -857,9 +755,7 @@ class _HomePageState extends State<HomePage> {
         final checkmarkColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
         final borderColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
         final titleTextColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
-        final svgIconColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
         final subtitleTextColor = isCompleted ? Color(0xFFAAAAAA) : Colors.white;
-
 
         return GestureDetector(
           onTap: () {
@@ -869,12 +765,22 @@ class _HomePageState extends State<HomePage> {
           },
           child: Row(
             children: [
-              // Left indicator Container
+              Padding(
+                padding: EdgeInsets.only(bottom: 10.h, right: 10.w),
+                child: Text(
+                  time,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: Color(0xffF1F1F1),
+                    fontFamily: 'Philosopher',
+                  ),
+                ),
+              ),
               Container(
                 padding: EdgeInsets.all(16.w),
                 margin: EdgeInsets.only(bottom: 10.h),
                 width: 10.w,
-                height: 0.12.sh,
+                height: 0.09.sh,
                 decoration: BoxDecoration(
                   color: isCompleted ? borderColor2 : Colors.transparent,
                   borderRadius: BorderRadius.only(
@@ -887,12 +793,11 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              // Main Container
               Expanded(
                 child: Container(
                   padding: EdgeInsets.all(10.w),
                   margin: EdgeInsets.only(bottom: 10.h),
-                  height: 0.12.sh,
+                  height: 0.09.sh,
                   decoration: BoxDecoration(
                     color: isCompleted ? Colors.transparent : buttonColor,
                     borderRadius: BorderRadius.only(
@@ -906,7 +811,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                   child: Row(
                     children: [
-                      // Checkbox Container
                       Container(
                         width: 24.w,
                         height: 24.w,
@@ -923,7 +827,6 @@ class _HomePageState extends State<HomePage> {
                             : null,
                       ),
                       SizedBox(width: 12.w),
-                      // Task details
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -950,51 +853,66 @@ class _HomePageState extends State<HomePage> {
                                 fontFamily: 'Poppins',
                               ),
                             ),
-                            SizedBox(height: 8.h),
-                            Row(
-                              children: [
-                                SvgPicture.asset("assets/svg/time.svg", width: 14.w, height: 14.h,colorFilter: ColorFilter.mode(svgIconColor, BlendMode.srcIn),),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  time,
-                                  style: TextStyle(
-                                    fontSize: 10.sp,
-                                    color: subtitleTextColor,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                                SizedBox(width: 12.w),
-                                SvgPicture.asset("assets/svg/calander.svg", width: 14.w, height: 14.h,colorFilter: ColorFilter.mode(svgIconColor, BlendMode.srcIn),),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  date,
-                                  style: TextStyle(
-                                    fontSize: 10.sp,
-                                    color: subtitleTextColor,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                              ],
-                            ),
                           ],
                         ),
                       ),
-                      // Options icon at the end
                       if (showOptions)
-                        Builder(
-                          builder: (context) => InkWell(
-                            onTap: () {
-                              final RenderBox renderBox = context.findRenderObject() as RenderBox;
-                              final position = renderBox.localToGlobal(Offset.zero);
-                              final size = renderBox.size;
-                              _showOptionsMenu(context, position, size);
-                            },
-                            child: Icon(
-                              Icons.more_vert,
-                              color: Colors.white,
-                              size: 24.sp,
+                        PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert, color: Colors.white, size: 24.sp),
+                          onSelected: (value) {
+                            if (value == 'schedule') {
+                              print('Add to schedule selected');
+                              // Add your schedule logic here
+                            } else if (value == 'cancel') {
+                              print('Cancel task selected');
+                              // Add your cancel logic here
+                            }
+                          },
+                          itemBuilder: (BuildContext context) => [
+                            PopupMenuItem(
+                              value: 'schedule',
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                              height: 40.h,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.access_time, color: textColor, size: 18.sp),
+                                  SizedBox(width: 5.w),
+                                  Text(
+                                    "Add To Schedule",
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontSize: 10.sp,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                            PopupMenuItem(
+                              value: 'cancel',
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                              height: 40.h,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete_outline, color: const Color(0xFFFF5A5A), size: 18.sp),
+                                  SizedBox(width: 5.w),
+                                  Text(
+                                    "Cancel Task",
+                                    style: TextStyle(
+                                      color: const Color(0xFFFF5A5A),
+                                      fontSize: 10.sp,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.r),
                           ),
+                          color: Colors.white,
+                          constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
                         ),
                     ],
                   ),
@@ -1006,39 +924,41 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-  ///--------------------------------- Today's Goal Card ---------------------------------------
+
+  // Today's Goal Card
   Widget _buildTodayGoalTask() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TitleWithViewAll(
           title: "Today's Goal Task",
-          showViewAll: true, // Show the "View All" option
+          showViewAll: true,
         ),
         SizedBox(height: 10.h),
         _buildTodaysGoalCard(
           title: "Morning Workout",
-          subtitle: "Goal : Lose 10 Lbs",
+          subtitle: "Goal: Lose 10 Lbs",
           time: "9:00 AM",
           showOptions: false,
-          initialCompleted: true, // Ensure true branch is reachable
+          initialCompleted: true,
         ),
         _buildTodaysGoalCard(
           title: "Study Programming",
-          subtitle: "Goal : Get A Tech Job",
+          subtitle: "Goal: Get A Tech Job",
           time: "1:00 PM",
           showOptions: false,
-          initialCompleted: true, // Ensure true branch is reachable
+          initialCompleted: true,
         ),
         _buildTodaysGoalCard(
           title: "Meal Prep For The Week",
-          subtitle: "Goal : Lose 10 Lbs",
+          subtitle: "Goal: Lose 10 Lbs",
           time: "8:00 PM",
           showOptions: true,
         ),
       ],
     );
   }
+
   Widget _buildTodaysGoalCard({
     required String title,
     required String subtitle,
@@ -1055,7 +975,6 @@ class _HomePageState extends State<HomePage> {
         final svgIconColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
         final subtitleTextColor = isCompleted ? Color(0xFFAAAAAA) : Colors.white;
 
-
         return GestureDetector(
           onTap: () {
             setState(() {
@@ -1064,7 +983,6 @@ class _HomePageState extends State<HomePage> {
           },
           child: Row(
             children: [
-              // Left indicator Container
               Container(
                 padding: EdgeInsets.all(16.w),
                 margin: EdgeInsets.only(bottom: 10.h),
@@ -1082,7 +1000,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              // Main Container
               Expanded(
                 child: Container(
                   padding: EdgeInsets.all(10.w),
@@ -1101,7 +1018,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                   child: Row(
                     children: [
-                      // Checkbox Container
                       Container(
                         width: 24.w,
                         height: 24.w,
@@ -1118,7 +1034,6 @@ class _HomePageState extends State<HomePage> {
                             : null,
                       ),
                       SizedBox(width: 12.w),
-                      // Task details
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1149,7 +1064,12 @@ class _HomePageState extends State<HomePage> {
                             SizedBox(height: 8.h),
                             Row(
                               children: [
-                                SvgPicture.asset("assets/svg/time.svg", width: 14.w, height: 14.h,colorFilter: ColorFilter.mode(svgIconColor, BlendMode.srcIn),),
+                                SvgPicture.asset(
+                                  "assets/svg/time.svg",
+                                  width: 14.w,
+                                  height: 14.h,
+                                  colorFilter: ColorFilter.mode(svgIconColor, BlendMode.srcIn),
+                                ),
                                 SizedBox(width: 4.w),
                                 Text(
                                   time,
@@ -1161,26 +1081,44 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ],
                             ),
-
                           ],
                         ),
                       ),
-                      // Options icon at the end
                       if (showOptions)
-                        Builder(
-                          builder: (context) => InkWell(
-                            onTap: () {
-                              final RenderBox renderBox = context.findRenderObject() as RenderBox;
-                              final position = renderBox.localToGlobal(Offset.zero);
-                              final size = renderBox.size;
-                              _showOptionsMenuForGoal(context, position, size);
-                            },
-                            child: Icon(
-                              Icons.more_vert,
-                              color: Colors.white,
-                              size: 24.sp,
+                        PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert, color: Colors.white, size: 24.sp),
+                          onSelected: (value) {
+                            if (value == 'cancel') {
+                              print('Cancel task selected');
+                              // Add your cancel logic here
+                            }
+                          },
+                          itemBuilder: (BuildContext context) => [
+                            PopupMenuItem(
+                              value: 'cancel',
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                              height: 40.h,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete_outline, color: const Color(0xFFFF5A5A), size: 18.sp),
+                                  SizedBox(width: 5.w),
+                                  Text(
+                                    "Cancel Task",
+                                    style: TextStyle(
+                                      color: const Color(0xFFFF5A5A),
+                                      fontSize: 10.sp,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                          ],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.r),
                           ),
+                          color: Colors.white,
+                          constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
                         ),
                     ],
                   ),
@@ -1192,14 +1130,15 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-///--------------------------------- Daily Goals Card ---------------------------------------
+
+  // Daily Goals Card
   Widget _buildDailyGoals() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TitleWithViewAll(
           title: "Goals Progress",
-          showViewAll: true, // Show the "View All" option
+          showViewAll: true,
         ),
         SizedBox(height: 10.h),
         _buildGoalCard("Lose 10 Lbs", 70),
@@ -1207,6 +1146,7 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
+
   Widget _buildGoalCard(String title, double initialProgress) {
     return StatefulBuilder(
       builder: (context, setState) {
@@ -1219,13 +1159,13 @@ class _HomePageState extends State<HomePage> {
               width: 10.w,
               height: 0.13.sh,
               decoration: BoxDecoration(
-                color:  Colors.transparent ,
+                color: Colors.transparent,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(12.r),
                   bottomLeft: Radius.circular(12.r),
                 ),
                 border: Border.all(
-                  color:  borderColor,
+                  color: borderColor,
                   width: 1,
                 ),
               ),
@@ -1249,7 +1189,6 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     Row(
                       children: [
                         Text(
@@ -1273,15 +1212,14 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     SizedBox(height: 8.h),
-                    // Animated Progress Bar
                     TweenAnimationBuilder(
                       tween: Tween<double>(begin: 0, end: progress),
                       duration: Duration(seconds: 1),
                       builder: (context, value, child) {
                         return LinearProgressIndicator(
                           value: value / 100,
-                          backgroundColor: Color(0xFF1C2A45), // Light blue background color
-                          color: Colors.white, // Dark blue progress color
+                          backgroundColor: Color(0xFF1C2A45),
+                          color: Colors.white,
                           minHeight: 8.h,
                           borderRadius: BorderRadius.circular(10.r),
                         );
@@ -1307,11 +1245,11 @@ class _HomePageState extends State<HomePage> {
                             style: TextStyle(
                               fontSize: 12.sp,
                               color: subTextColor2,
-                              fontWeight: FontWeight.w600,// Light purple color
+                              fontWeight: FontWeight.w600,
                               fontFamily: 'Poppins',
                             ),
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ],
@@ -1323,31 +1261,57 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-}
-///--------------------------------- Sliver Date Selector Delegate ---------------------------------------
-class _SliverDateSelectorDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-  final double height;
 
-  _SliverDateSelectorDelegate({required this.child, required this.height});
-
+  // Build Method
   @override
-  double get minExtent => height;
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Material(
-      color: backgroundColor,
-      elevation: shrinkOffset > 0 ? 2.0 : 0.0,
-      child: child,
+  Widget build(BuildContext context) {
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        title: _buildHeader(),
+        automaticallyImplyLeading: false,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const CalendarWidget(),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: _buildAnyTimeTasks(),
+            ),
+            SizedBox(height: 20.h),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: _buildTodaySchedule(),
+            ),
+     /*       SizedBox(height: 20.h),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: _buildTodayGoalTask(),
+            ),
+            SizedBox(height: 20.h),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: _buildDailyGoals(),
+            ),*/
+            SizedBox(height: 100.h),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50.r),
+        ),
+        backgroundColor: flortingButtonColor,
+        onPressed: () {
+          _openTaskDialog();
+        },
+        child: Icon(Icons.add, color: Colors.white, size: 30.sp),
+      ),
     );
-  }
-
-  @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
-    return true;
   }
 }
