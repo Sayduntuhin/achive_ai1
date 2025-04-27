@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-
 import '../../../themes/colors.dart';
 
+
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+
+
+
+
   final String title;
   final VoidCallback? onBackPress;
   final Color backgroundColor;
   final Color borderColor;
   final Color textColor;
-
 
   const CustomAppBar({
     super.key,
@@ -26,14 +29,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return Padding(
       padding: const EdgeInsets.all(5.0),
       child: Container(
-        color: backgroundColor, // Custom background color for AppBar
-        padding: EdgeInsets.only(top: 20.h), // Padding at the top for alignment
+        color: backgroundColor,
+        padding: EdgeInsets.only(top: 20.h),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Leading Icon (Back Button)
                 Padding(
                   padding: EdgeInsets.only(left: 10, top: 10, bottom: 5),
                   child: Container(
@@ -48,12 +50,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                         padding: const EdgeInsets.only(left: 4),
                         child: Icon(Icons.arrow_back_ios, color: borderColor, size: 20.sp),
                       ),
-                      onPressed: onBackPress ?? () => Get.back(), // ✅ Default action: Go back
+                      onPressed: onBackPress ?? () => Get.back(),
                     ),
                   ),
                 ),
                 Spacer(),
-                // Title Section
                 Center(
                   child: Text(
                     title,
@@ -68,6 +69,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 Spacer(flex: 2,)
               ],
             ),
+            SizedBox(height: 10.h),
+            Divider(
+              color: dividerColor,
+              thickness: 1,
+              height: 1,
+              indent: 10,
+              endIndent: 10,
+            ),
           ],
         ),
       ),
@@ -75,5 +84,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight); // Default height of the AppBar
+  Size get preferredSize => Size.fromHeight(kToolbarHeight);
 }

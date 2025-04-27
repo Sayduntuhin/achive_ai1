@@ -339,7 +339,7 @@ class _HomePageState extends State<HomePage> {
                                             borderRadius: BorderRadius.circular(10),
                                             borderSide: BorderSide(color: primaryColor),
                                           ),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
                                           hintText: "mm/dd/yy",
                                           hintStyle: TextStyle(color: primaryColor),
 
@@ -373,7 +373,7 @@ class _HomePageState extends State<HomePage> {
                                             borderRadius: BorderRadius.circular(10),
                                             borderSide: BorderSide(color: primaryColor),
                                           ),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
                                           hintText: "--:--:--",
                                           hintStyle: TextStyle(color: primaryColor),
                                           suffixIcon: Icon(Icons.access_time, size: 20.sp,color:primaryColor   ,),

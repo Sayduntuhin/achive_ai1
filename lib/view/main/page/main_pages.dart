@@ -34,7 +34,7 @@ class MainScreen extends StatelessWidget {
       case 0:
         return HomePage();
       case 1:
-        return TaskPage();
+        return GoalsPage();
       case 2:
         return ChatBotScreen();
       case 3:

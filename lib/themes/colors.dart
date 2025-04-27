@@ -21,5 +21,6 @@ Color primaryColor = const Color(0xff4BA3C3);
 Color secondaryColor = const Color(0xffD1D5DB);
 Color borderColor = const Color(0xff4BA3C3);
 Color borderColor2 = const Color(0xFF088408);
+Color greenColor = const Color(0xFF088408);
 Color loadingIndicatorColor = const Color(0xff4BA3C3);
 Color secondaryBorderColor  = const Color(0xff1C4A5A);

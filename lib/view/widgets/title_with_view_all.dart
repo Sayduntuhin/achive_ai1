@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import '../../themes/colors.dart';
 
 class TitleWithViewAll extends StatelessWidget {
   final String title;
+  final double titleFontSize; // Font size for the title
   final bool showViewAll; // Controls whether the "View All" section should be shown
   final String viewAllText; // Custom text for "View All" button
 
   const TitleWithViewAll({
     super.key,
     required this.title,
+    this.titleFontSize = 24, // Default font size for the title
     this.showViewAll = true, // Default is true, so View All is shown
     this.viewAllText = "View All", // Default "View All" text
   });
@@ -22,7 +26,7 @@ class TitleWithViewAll extends StatelessWidget {
         Text(
           title,
           style: TextStyle(
-            fontSize: 24.sp,
+            fontSize: titleFontSize.sp,
             color: titleColor, // You can replace with your `titleColor`
             fontWeight: FontWeight.w700,
             fontFamily: 'Philosopher',
@@ -33,7 +37,7 @@ class TitleWithViewAll extends StatelessWidget {
         if (showViewAll)
           GestureDetector(
             onTap: () {
-            },
+              Get.toNamed('/missedTask');            },
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
               decoration: BoxDecoration(

@@ -4,11 +4,13 @@ import 'package:achive_ai/view/forgetPassword/pages/pass_change_success_page.dar
 import 'package:achive_ai/view/forgetPassword/pages/reset_password_page.dart';
 import 'package:achive_ai/view/login/pages/log_in_page.dart';
 import 'package:achive_ai/view/main/page/main_pages.dart';
+import 'package:achive_ai/view/missed_task/page/missed_task.dart';
 import 'package:achive_ai/view/setting/pages/help_&_support.dart';
 import 'package:achive_ai/view/setting/pages/manage_sub_page.dart';
 import 'package:achive_ai/view/setting/pages/privacy_policy.dart';
 import 'package:achive_ai/view/setting/pages/terms_&_conditions.dart';
 import 'package:achive_ai/view/signUp/pages/sign_up_page.dart';
+import 'package:achive_ai/view/task/page/view_task_page.dart';
 import 'package:achive_ai/view/welcome/pages/welcome_page.dart';
 import 'package:get/get.dart';
 import '../view/aiboost/page/aiboost_page.dart';
@@ -31,6 +33,9 @@ class Routes {
   static const String termsConditions = "/termsConditions";
   static const String privacyPolicy = "/privacyPolicy";
   static const String upgradePlan = "/upgradePlan";
+  static const String missedTask = "/missedTask";
+  static const String viewTask = "/viewTask";
+
 }
 
 class AppPages {
@@ -48,6 +53,8 @@ class AppPages {
     GetPage(name: Routes.signUP, page: () => SignUpScreen(), transition: Transition.size),
     //>>>>>>>>>>>>>>>>MainPage>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     GetPage(name: Routes.mainPage, page: () => MainScreen(), transition: Transition.fadeIn),
+    GetPage(name: Routes.missedTask, page: () => MissedTaskPage(), transition: Transition.fadeIn),
+    GetPage(name: Routes.viewTask, page: () => ViewTaskPage(), transition: Transition.fadeIn),
     //>>>>>>>>>>>>>>>>SettingPage>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     GetPage(name: Routes.manageSubscription, page: () => ManageSubscriptionScreen(), transition: Transition.fadeIn),
     GetPage(name: Routes.personalInfo, page: () => PersonalInformationScreen(), transition: Transition.fadeIn),

@@ -1,293 +1,411 @@
 import 'package:achive_ai/themes/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 import '../../widgets/title_with_view_all.dart';
 
-class TaskPage extends StatefulWidget {
-  const TaskPage({super.key});
-
-  @override
-  State<TaskPage> createState() => _TaskPageState();
-}
-
-class _TaskPageState extends State<TaskPage> {
-  String _selectedTab = 'Active'; // Keeps track of the active/completed tab
-
-  List<Map<String, dynamic>> tasks = [
-    {
-      'title': 'Study Programming',
-      'goal': 'Goal: Get A Tech Job',
-      'time': '6:00 AM',
-      'completed': false,
-    },
-    {
-      'title': 'Meal Prep For The Week',
-      'goal': 'Goal: Lose 10 Lbs',
-      'time': '6:00 AM',
-      'completed': false,
-    },
-    {
-      'title': 'Team Meeting',
-      'goal': 'Discuss Project Timeline',
-      'time': '6:00 AM',
-      'completed': true,
-    },
-    {
-      'title': 'Lunch With Sarah',
-      'goal': 'At Cafe Milano',
-      'time': '6:00 AM',
-      'completed': true,
-    },
-  ];
-
-  // Toggle between Active and Completed tasks
-  void _toggleTab(String tab) {
-    setState(() {
-      _selectedTab = tab;
-    });
-  }
+class GoalsPage extends StatelessWidget {
+  const GoalsPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    List<Map<String, dynamic>> filteredTasks = tasks
-        .where((task) =>
-    (_selectedTab == 'Active' && !task['completed']) ||
-        (_selectedTab == 'Completed' && task['completed']))
-        .toList();
+    // Using the same blue color for all cards as in the original image
+    final Color cardColor = primaryColor;
+    final Color buttonColor = subTextColor2;
 
     return Scaffold(
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 80.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TitleWithViewAll(
-              title: "Your Task",
-              viewAllText: "View Goals",
-              showViewAll: true, // Show the "View All" option
-            ),
-            SizedBox(height: 10.h),
-            // Parent Container with changing border color
-            Container(
-              width: double.infinity,
-              height: 50.h,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: _selectedTab == 'Active'
-                      ? primaryColor
-                      : borderColor2, // Change border color based on selected tab
-                  width: 1,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  _buildTab('Active'),
-                  _buildTab('Completed'),
-                ],
-              ),
-            ),
-            // Task List
-            Expanded(
-              child: ListView.builder(
-                itemCount: filteredTasks.length,
-                itemBuilder: (context, index) {
-                  final task = filteredTasks[index];
-                  return _buildTaskCard(
-                    task['title'],
-                    task['goal'],
-                    task['time'],
-                    task['completed'],
-                    onChanged: (bool? value) {
-                      setState(() {
-                        task['completed'] = value ?? false;
-                      });
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
- ///-------------------------------------------build tab-----------------------------------
-  Widget _buildTab(String tab) {
-    bool isSelected = _selectedTab == tab;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => _toggleTab(tab),
+      backgroundColor: backgroundColor,
+      body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? (tab == 'Active' ? primaryColor : borderColor2)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isSelected
-                    ? (tab == 'Active' ?primaryColor : borderColor2)
-                    : Colors.transparent,
-                width: 1,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                tab,
-                style: TextStyle(
-                  color: Colors.white ,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16.sp,
-                  fontFamily: "Philosopher",
+          padding: EdgeInsets.symmetric(vertical: 16.h),
+          child: Column(
+            children: [
+              SizedBox(height: 40.h),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TitleWithViewAll(
+                  title: "Your Goals",
+                  titleFontSize: 24,
+                  showViewAll: false,
                 ),
               ),
-            ),
+              SizedBox(height: 20.h),
+
+              GoalCard(
+                title: "Lose 10 Lbs",
+                description: "Get Healthier And More Fit By Losing Weight",
+                overallProgress: 70,
+                consistency: 30,
+                tasks: [
+                  TaskInfo(
+                    name: "Eat A Healthy Diet",
+                    remainingRepetitions: 72,
+                    consistency: 28,
+                  ),
+                  TaskInfo(
+                    name: "Work Out 3 Times",
+                    remainingRepetitions: 72,
+                    consistency: 28,
+                  ),
+                ],
+                cardColor: cardColor,
+                buttonColor: buttonColor,
+              ),
+              SizedBox(height: 16.h),
+
+              // Career goal card
+              GoalCard(
+                title: "Get A Tech Job",
+                description: "Work Towards Securing A Developer Position",
+                overallProgress: 45,
+                consistency: 65,
+                tasks: [
+                  TaskInfo(
+                    name: "Complete Flutter Course",
+                    remainingRepetitions: 5,
+                    consistency: 85,
+                  ),
+                  TaskInfo(
+                    name: "Build Portfolio Projects",
+                    remainingRepetitions: 3,
+                    consistency: 40,
+                  ),
+                ],
+                cardColor: cardColor,
+                buttonColor: buttonColor,
+              ),
+              SizedBox(height: 16.h),
+
+              // Savings goal card
+              GoalCard(
+                title: "Save \$5,000",
+                description: "Build Financial Security For The Future",
+                overallProgress: 25,
+                consistency: 80,
+                tasks: [
+                  TaskInfo(
+                    name: "Monthly Budget Review",
+                    remainingRepetitions: 8,
+                    consistency: 90,
+                  ),
+                  TaskInfo(
+                    name: "Deposit to Savings",
+                    remainingRepetitions: 36,
+                    consistency: 75,
+                  ),
+                ],
+                cardColor: cardColor,
+                buttonColor: buttonColor,
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+}
 
- ///-------------------------------------------build task card------------------------------
-  Widget _buildTaskCard(String title, String goal, String time, bool isCompleted,
-      {required ValueChanged<bool?> onChanged}) {
-    return StatefulBuilder(
-      builder: (context, setState) {
-        final checkmarkColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
-        final borderColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
-        final titleTextColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
-        final subtitleTextColor = isCompleted ? Color(0xFFAAAAAA) : Colors.white;
-        final svgIconColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
+// Task information model
+class TaskInfo {
+  final String name;
+  final int remainingRepetitions;
+  final int consistency;
 
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              isCompleted = !isCompleted;
-            });
-            onChanged(isCompleted); // Update the state when clicked
-          },
-          child: Row(
+  TaskInfo({
+    required this.name,
+    required this.remainingRepetitions,
+    required this.consistency,
+  });
+}
+
+class GoalCard extends StatefulWidget {
+  final String title;
+  final String description;
+  final int overallProgress;
+  final int consistency;
+  final List<TaskInfo> tasks;
+  final Color cardColor;
+  final Color buttonColor;
+
+  const GoalCard({
+    Key? key,
+    required this.title,
+    required this.description,
+    required this.overallProgress,
+    required this.consistency,
+    required this.tasks,
+    required this.cardColor,
+    required this.buttonColor,
+  }) : super(key: key);
+
+  @override
+  _GoalCardState createState() => _GoalCardState();
+}
+
+class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _progressAnimation;
+  late List<Animation<double>> _taskAnimations;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Set up animations
+    _animationController = AnimationController(
+      duration: Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    // Main progress animation
+    _progressAnimation = Tween<double>(
+      begin: 0.0,
+      end: widget.overallProgress / 100,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Interval(0.0, 0.65, curve: Curves.easeInOut),
+      ),
+    );
+
+    // Task animations with staggered effect - fixed to ensure end <= 1.0
+    _taskAnimations = [];
+    for (int i = 0; i < widget.tasks.length; i++) {
+      final task = widget.tasks[i];
+      // Make sure we don't exceed 1.0 for the interval
+      double startTime = 0.3 + (i * 0.15);
+      // Cap end time to 1.0
+      double endTime = min(startTime + 0.5, 1.0);
+
+      _taskAnimations.add(
+          Tween<double>(
+            begin: 0.0,
+            end: task.consistency / 100,
+          ).animate(
+            CurvedAnimation(
+              parent: _animationController,
+              curve: Interval(startTime, endTime, curve: Curves.easeInOut),
+            ),
+          )
+      );
+    }
+
+    // Start the animation after a short delay
+    Future.delayed(Duration(milliseconds: 200), () {
+      _animationController.forward();
+    });
+  }
+
+  // Helper method to ensure the value is within bounds
+  double min(double a, double b) {
+    return a < b ? a : b;
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Container(
+          width: double.infinity,
+          margin: EdgeInsets.symmetric(horizontal: 16.w),
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: widget.cardColor,
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: [
+              BoxShadow(
+                color: widget.cardColor.withOpacity(0.3),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Left indicator Container (Checkbox)
-              Container(
-                padding: EdgeInsets.all(16.w),
-                margin: EdgeInsets.only(bottom: 10.h),
-                width: 10.w,
-                height: 0.12.sh,
-                decoration: BoxDecoration(
-                  color: isCompleted ? borderColor : Colors.transparent,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(12.r),
-                    bottomLeft: Radius.circular(12.r),
-                  ),
-                  border: Border.all(
-                    color: isCompleted ? Colors.transparent : Colors.blue,
-                    width: 1,
+              // Goal Title with scale animation
+              Transform.scale(
+                scale: Curves.easeInOut.transform(_animationController.value),
+                child: Text(
+                  widget.title,
+                  style: TextStyle(
+                    fontFamily: "Philosopher",
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.bold,
+                    color: titleColor2,
                   ),
                 ),
               ),
-              // Main Task Container
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(10.w),
-                  margin: EdgeInsets.only(bottom: 10.h),
-                  height: 0.12.sh,
-                  decoration: BoxDecoration(
-                    color: isCompleted ? Colors.transparent : buttonColor,
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12.r),
-                      bottomRight: Radius.circular(12.r),
-                    ),
-                    border: Border.all(
-                      color: borderColor,
-                      width: 1,
+              SizedBox(height: 4.h),
+
+              // Goal Description with fade animation
+              Opacity(
+                opacity: _animationController.value,
+                child: Text(
+                  widget.description,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: Colors.white,
+                    fontFamily: "Poppins",
+                  ),
+                ),
+              ),
+              SizedBox(height: 10.h),
+
+              // Overall Progress
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Over All Progress",
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: titleColor2,
+                      fontFamily: "Poppins",
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      // Checkbox Container
-                      Container(
-                        width: 24.w,
-                        height: 24.w,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: checkmarkColor,
-                          border: Border.all(
-                            color: isCompleted ? Colors.transparent : Colors.white,
-                            width: 2,
+                  Text(
+                    "${widget.overallProgress}%",
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: "Poppins",
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 6.h),
+
+              // Animated Progress Bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10.r),
+                child: LinearProgressIndicator(
+                  value: _progressAnimation.value,
+                  backgroundColor: backgroundColor,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  minHeight: 8.h,
+                ),
+              ),
+              SizedBox(height: 10.h),
+
+              // Consistency
+              Text(
+                "Consistency: ${widget.consistency}%",
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.white,
+                  fontFamily: "Poppins",
+                ),
+              ),
+              SizedBox(height: 5.h),
+
+              // Divider with animation
+              Transform.scale(
+                scale: _animationController.value,
+                alignment: Alignment.centerLeft,
+                child: Divider(color: Colors.black, thickness: 1),
+              ),
+
+              // Task Label
+              Text(
+                "Task:",
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.white,
+                  fontFamily: "Poppins",
+                ),
+              ),
+              SizedBox(height: 10.h),
+
+              // Task list with animations - fixed to avoid crashes
+              for (int index = 0; index < widget.tasks.length; index++)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.tasks[index].name,
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: titleColor2,
+                        fontFamily: "Poppins",
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Remaining Repetitions: ${widget.tasks[index].remainingRepetitions}",
+                          style: TextStyle(
+                            fontSize: 8.sp,
+                            color: Colors.white,
+                            fontFamily: "Poppins",
+
                           ),
                         ),
-                        child: isCompleted
-                            ? Icon(Icons.check, color: Colors.white, size: 16.sp)
-                            : null,
-                      ),
-                      SizedBox(width: 12.w),
-                      // Task details
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 1.sw,
-                              height: 0.03.sh,
-                              child: Text(
-                                title,
-                                maxLines: 1,
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: titleTextColor,
-                                  fontFamily: 'Philosopher',
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 5.h),
-                            Text(
-                              goal,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: subtitleTextColor,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                            SizedBox(height: 8.h),
-                            Row(
-                              children: [
-                                SvgPicture.asset("assets/svg/time.svg", width: 14.w, height: 14.h,colorFilter: ColorFilter.mode(svgIconColor, BlendMode.srcIn),),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  time,
-                                  style: TextStyle(
-                                    fontSize: 10.sp,
-                                    color: subtitleTextColor,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Options icon (if any)
-                      if (true) // This can be modified based on a condition for options
-                        Builder(
-                          builder: (context) => InkWell(
-                            onTap: () {
-                              // Action when options are tapped
-                            },
-                            child: Icon(
-                              Icons.more_vert,
-                              color: Colors.white,
-                              size: 24.sp,
-                            ),
+                        Text(
+                          "Consistency: ${widget.tasks[index].consistency}",
+                          style: TextStyle(
+                            fontSize: 8.sp,
+                            color: Colors.black,
+                            fontFamily: "Poppins",
                           ),
                         ),
-                    ],
+                      ],
+                    ),
+                    SizedBox(height: 4.h),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10.r),
+                      child: LinearProgressIndicator(
+                        value: _taskAnimations[index].value,
+                        backgroundColor: backgroundColor,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        minHeight: 6.h,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                  ],
+                ),
+
+              // View Tasks Button with slide animation
+              Transform.translate(
+                offset: Offset(
+                  (1.0 - _animationController.value) * 50.0,
+                  0.0,
+                ),
+                child: Opacity(
+                  opacity: _animationController.value,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                       Get.toNamed("/viewTask");
+                      },
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size(50, 30),
+                      ),
+                      child: Text(
+                        "View Tasks",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: widget.buttonColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -297,5 +415,4 @@ class _TaskPageState extends State<TaskPage> {
       },
     );
   }
-
 }
