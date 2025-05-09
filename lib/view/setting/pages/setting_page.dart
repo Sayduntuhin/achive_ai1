@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import '../../../api/auth_service.dart';
 import '../../../themes/colors.dart';
 import '../../widgets/custom_loading_indicator.dart';
 import '../widgets/custom_switch.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+  final AuthService _authService = AuthService();
+
+  SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +32,7 @@ class SettingsScreen extends StatelessWidget {
                 fontFamily: "Philosopher",
               ),
             ),
-            Divider()
+            const Divider()
           ],
         ),
         centerTitle: true,
@@ -44,19 +47,16 @@ class SettingsScreen extends StatelessWidget {
             _buildSwitchTile("Notification", 'assets/svg/notification.svg', true),
 
             /// ✅ Menu Items
-            _buildMenuItem("Manage Subscription", 'assets/svg/manage_sub.svg',
-                    () {
-                    Get.toNamed('/manageSubscription');
-                }),
-            _buildMenuItem("Personal information", 'assets/svg/personal.svg',
-                    () {
-                  Get.toNamed('/personalInfo');
-                }),
+            _buildMenuItem("Manage Subscription", 'assets/svg/manage_sub.svg', () {
+              Get.toNamed('/manageSubscription');
+            }),
+            _buildMenuItem("Personal information", 'assets/svg/personal.svg', () {
+              Get.toNamed('/personalInfo');
+            }),
             _buildMenuItem("Help & Support", 'assets/svg/help.svg', () {
               Get.toNamed('/helpSupport');
             }),
-            _buildMenuItem(
-                "Terms & Condition", 'assets/svg/trams&conditions.svg', () {
+            _buildMenuItem("Terms & Condition", 'assets/svg/trams&conditions.svg', () {
               Get.toNamed('/termsConditions');
             }),
             _buildMenuItem("Privacy Policy", 'assets/svg/privacy.svg', () {
@@ -64,8 +64,7 @@ class SettingsScreen extends StatelessWidget {
             }),
 
             /// ✅ Delete Data Option
-            _buildMenuItem(
-                "Delete my Data", 'assets/svg/delete_data.svg', () {
+            _buildMenuItem("Delete my Data", 'assets/svg/delete_data.svg', () {
               _showDeleteDataDialog();
             }, isDelete: true),
 
@@ -81,32 +80,34 @@ class SettingsScreen extends StatelessWidget {
   /// ✅ Switch Tile for Notification
   Widget _buildSwitchTile(String title, String svgPath, bool isActive) {
     return ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: SvgPicture.asset(svgPath, width: 22.sp, height: 22.sp),
-        title: Text(
-          title,
-          style: TextStyle(
-              fontSize: 18.sp,
-              color: Colors.black,
-              fontWeight: FontWeight.w400,
-              fontFamily: "Poppins"),
+      contentPadding: EdgeInsets.zero,
+      leading: SvgPicture.asset(svgPath, width: 22.sp, height: 22.sp),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 18.sp,
+          color: Colors.black,
+          fontWeight: FontWeight.w400,
+          fontFamily: "Poppins",
         ),
-        trailing: CustomSwitch());
+      ),
+      trailing: const CustomSwitch(),
+    );
   }
 
   /// ✅ Menu Item with Arrow Icon
-  Widget _buildMenuItem(String title, String svgPath, VoidCallback onTap,
-      {bool isDelete = false}) {
+  Widget _buildMenuItem(String title, String svgPath, VoidCallback onTap, {bool isDelete = false}) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: SvgPicture.asset(svgPath, width: 22.sp, height: 22.sp),
       title: Text(
         title,
         style: TextStyle(
-            fontSize: 18.sp,
-            color: Colors.black,
-            fontWeight: FontWeight.w400,
-            fontFamily: "Poppins"),
+          fontSize: 18.sp,
+          color: Colors.black,
+          fontWeight: FontWeight.w400,
+          fontFamily: "Poppins",
+        ),
       ),
       trailing: isDelete
           ? Icon(Icons.delete, color: Colors.red, size: 20.sp)
@@ -128,13 +129,13 @@ class SettingsScreen extends StatelessWidget {
             Text(
               "Log Out",
               style: TextStyle(
-                   fontSize: 18.sp,
-                  color: textColor,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: "Poppins",
+                fontSize: 18.sp,
+                color: textColor,
+                fontWeight: FontWeight.w500,
+                fontFamily: "Poppins",
               ),
             ),
-            Spacer(),
+            const Spacer(),
             Icon(Icons.logout_sharp, color: buttonColor, size: 20.sp),
           ],
         ),
@@ -147,65 +148,8 @@ class SettingsScreen extends StatelessWidget {
     Get.dialog(
       AlertDialog(
         backgroundColor: Colors.white,
-        title: Text("Are you sure you want to delete all your data?",style: TextStyle(fontSize: 14.sp,fontFamily: "Poppins"),textAlign: TextAlign.center,),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.r),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Get.back();
-            },
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.red, // Orange color for "Yes"
-              padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 5.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25.r),
-              ),
-            ),
-            child: Text(
-              "Yes",
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.back(); // Close the dialog
-            },
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 5.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25.r),
-              ),
-              side: BorderSide(color: secondaryBorderColor),
-            ),
-            child: Text(
-              "No",
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                color: textColor2,
-              ),
-            ),
-          ),
-          SizedBox(width: 2.w,)
-        ],
-      ),
-      barrierDismissible: false, // Prevent closing by tapping outside
-    );
-  }
-
-  /// Log Out Confirmation Dialog
-  void _showLogoutDialog() {
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: Colors.white,
         title: Text(
-          "Do you really want to log out?",
+          "Are you sure you want to delete all your data?",
           style: TextStyle(fontSize: 14.sp, fontFamily: "Poppins"),
           textAlign: TextAlign.center,
         ),
@@ -215,16 +159,7 @@ class SettingsScreen extends StatelessWidget {
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              // Show loading indicator before logging out
-              Get.dialog(
-                barrierDismissible: false,
-                const CustomLoadingIndicator(),
-              );
-              // Simulate a delay before navigating to login
-              Future.delayed(Duration(seconds: 2), () {
-                SnackbarHelper.showInfoSnackbar("Log Out Successfully");
-                Get.offAllNamed("/logIn"); // Navigate to login after delay
-              });
+              Get.back();
             },
             style: TextButton.styleFrom(
               backgroundColor: Colors.red,
@@ -265,7 +200,85 @@ class SettingsScreen extends StatelessWidget {
           SizedBox(width: 2.w),
         ],
       ),
-      barrierDismissible: false, // Prevent closing by tapping outside
+      barrierDismissible: false,
+    );
+  }
+
+  /// Log Out Confirmation Dialog
+  void _showLogoutDialog() {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: Colors.white,
+        title: Text(
+          "Do you really want to log out?",
+          style: TextStyle(fontSize: 14.sp, fontFamily: "Poppins"),
+          textAlign: TextAlign.center,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15.r),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () async {
+              // Show loading indicator
+              Get.dialog(
+                const CustomLoadingIndicator(),
+                barrierDismissible: false,
+              );
+
+              // Perform logout
+              final success = await _authService.logout();
+
+              // Close loading dialog
+              Get.back();
+
+              if (success) {
+                SnackbarHelper.showInfoSnackbar("Logged out successfully");
+                Get.offAllNamed("/logIn");
+              } else {
+                SnackbarHelper.showErrorSnackbar("Failed to log out");
+              }
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.red,
+              padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 5.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25.r),
+              ),
+            ),
+            child: Text(
+              "Yes",
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back(); // Close the dialog
+            },
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 5.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25.r),
+              ),
+              side: BorderSide(color: secondaryBorderColor),
+            ),
+            child: Text(
+              "No",
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: textColor2,
+              ),
+            ),
+          ),
+          SizedBox(width: 2.w),
+        ],
+      ),
+      barrierDismissible: false,
     );
   }
 }

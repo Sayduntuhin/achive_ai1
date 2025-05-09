@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import '../../themes/colors.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
   final Color backgroundColor;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color? borderColor;
 
   const CustomButton({
     super.key,
     required this.text,
     required this.backgroundColor,
-    required this.onPressed,
+    this.onPressed,
     this.borderColor,
   });
 
@@ -28,8 +27,9 @@ class CustomButton extends StatelessWidget {
           backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.r),
-            side: borderColor != null ? BorderSide(color: borderColor!) : BorderSide.none,
-
+            side: borderColor != null
+                ? BorderSide(color: borderColor!)
+                : BorderSide.none,
           ),
         ),
         child: Text(
@@ -38,7 +38,9 @@ class CustomButton extends StatelessWidget {
             fontFamily: "Philosopher",
             fontSize: 16.sp,
             fontWeight: FontWeight.w600,
-            color: borderColor  != null ? Color(0xff1C4A5A) : secondaryTextColor,
+            color: borderColor != null
+                ? const Color(0xff1C4A5A)
+                : secondaryTextColor,
           ),
         ),
       ),

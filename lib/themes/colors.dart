@@ -6,6 +6,7 @@ Color navbarColor = const Color(0xff4BA3C3);
 Color textColor = const Color(0xff4BA3C3);
 Color secondaryTextColor = const Color(0xffD1D5DB);
 Color textColor2 = const Color(0xFF1C2A45);
+Color textColor3 = const Color(0xFFFFFFFF);
 Color subTextColor = const Color(0xffAAB8FF);
 Color subTextColor2 = const Color(0xffA16BDD);
 Color flortingButtonColor = const Color(0xffA16BDD);

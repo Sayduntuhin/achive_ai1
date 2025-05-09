@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class SnackbarHelper {
-
   // Success Snackbar
   static void showSuccessSnackbar(String message) {
     Get.snackbar(
-      "Success",  // Title
-      message,    // Message
+      "Success",
+      message,
       snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.green,
       colorText: Colors.white,
@@ -21,8 +20,8 @@ class SnackbarHelper {
   // Error Snackbar
   static void showErrorSnackbar(String message) {
     Get.snackbar(
-      "Error",    // Title
-      message,    // Message
+      "Error",
+      message,
       snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.red,
       colorText: Colors.white,
@@ -36,8 +35,8 @@ class SnackbarHelper {
   // Info Snackbar
   static void showInfoSnackbar(String message) {
     Get.snackbar(
-      "Info",     // Title
-      message,    // Message
+      "Info",
+      message,
       snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.blue,
       colorText: Colors.white,

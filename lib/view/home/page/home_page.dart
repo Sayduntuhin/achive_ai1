@@ -5,8 +5,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../../widgets/title_with_view_all.dart';
 import '../../../controller/calander_controller.dart';
+import '../widgets/task.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,15 +20,18 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _taskNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  String _selectedGoal = ""; // To store the selected goal
-  String _taskType = "Any Time"; // Default task type, can be removed if no longer needed.
+  String _selectedGoal = "";
+  String _taskType = "Any Time";
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
 
   final List<String> goalOptions = [
+    "Lose 10 Lbs",
+    "Get A Tech Job",
     "Eat a Healthy Diet",
     "Exercise Daily",
     "Get Enough Sleep",
     "Complete a Course",
-    // Add more goals as needed
   ];
 
   @override
@@ -45,7 +50,6 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  // Disclaimer Dialog Methods
   Future<void> _checkAndShowDisclaimerDialog() async {
     final prefs = await SharedPreferences.getInstance();
     final hasShownDisclaimer = prefs.getBool('hasShownDisclaimer') ?? false;
@@ -170,15 +174,19 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Open Task Dialog
   void _openTaskDialog() {
+    final controller = Get.find<CalendarController>();
+    _selectedGoal = goalOptions.first;
+    _selectedDate = controller.selectedDay.value;
+    _selectedTime = TimeOfDay.now();
+    _taskType = "Any Time";
+    _taskNameController.clear();
+    _descriptionController.clear();
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        // Fetch the primary color from the theme
-        Color primaryColor = Theme.of(context).primaryColor;
-
         return StatefulBuilder(
           builder: (context, setState) {
             return Dialog(
@@ -231,6 +239,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             SizedBox(height: 5.h),
                             TextField(
+                              controller: _taskNameController,
                               cursorColor: primaryColor,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(
@@ -255,6 +264,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             SizedBox(height: 5.h),
                             TextField(
+                              controller: _descriptionController,
                               cursorColor: primaryColor,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(
@@ -283,18 +293,16 @@ class _HomePageState extends State<HomePage> {
                             SizedBox(height: 5.h),
                             Container(
                               decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Colors.grey,
-                                ),
+                                border: Border.all(color: Colors.grey),
                                 borderRadius: BorderRadius.circular(10.r),
                               ),
                               child: DropdownButton<String>(
                                 borderRadius: BorderRadius.circular(10.r),
                                 isExpanded: true,
-                                value: _selectedGoal.isEmpty ? null : _selectedGoal,
+                                value: _selectedGoal,
                                 hint: Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 15.w),
-                                  child: Text("Eat a Healthy Diet", style: TextStyle(color: Colors.grey)),
+                                  child: Text("Select a Goal", style: TextStyle(color: Colors.grey)),
                                 ),
                                 items: goalOptions.map((String goal) {
                                   return DropdownMenuItem<String>(
@@ -313,7 +321,6 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                             SizedBox(height: 15.h),
-                            // Date and Time Fields in a Row
                             Row(
                               children: [
                                 Expanded(
@@ -330,6 +337,7 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                       SizedBox(height: 5.h),
                                       TextField(
+                                        readOnly: true,
                                         decoration: InputDecoration(
                                           border: OutlineInputBorder(
                                             borderRadius: BorderRadius.circular(10.r),
@@ -340,11 +348,25 @@ class _HomePageState extends State<HomePage> {
                                             borderSide: BorderSide(color: primaryColor),
                                           ),
                                           contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
-                                          hintText: "mm/dd/yy",
+                                          hintText: _selectedDate != null
+                                              ? controller.formatDate(_selectedDate!)
+                                              : "mm/dd/yy",
                                           hintStyle: TextStyle(color: primaryColor),
-
                                           suffixIcon: Icon(Icons.calendar_today, color: primaryColor, size: 20.sp),
                                         ),
+                                        onTap: () async {
+                                          final pickedDate = await showDatePicker(
+                                            context: context,
+                                            initialDate: _selectedDate ?? DateTime.now(),
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime(2100),
+                                          );
+                                          if (pickedDate != null) {
+                                            setState(() {
+                                              _selectedDate = pickedDate;
+                                            });
+                                          }
+                                        },
                                       ),
                                     ],
                                   ),
@@ -364,6 +386,7 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                       SizedBox(height: 5.h),
                                       TextField(
+                                        readOnly: true,
                                         decoration: InputDecoration(
                                           border: OutlineInputBorder(
                                             borderRadius: BorderRadius.circular(10.r),
@@ -374,15 +397,63 @@ class _HomePageState extends State<HomePage> {
                                             borderSide: BorderSide(color: primaryColor),
                                           ),
                                           contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
-                                          hintText: "--:--:--",
+                                          hintText: _selectedTime != null
+                                              ? _selectedTime!.format(context)
+                                              : "--:--:--",
                                           hintStyle: TextStyle(color: primaryColor),
-                                          suffixIcon: Icon(Icons.access_time, size: 20.sp,color:primaryColor   ,),
+                                          suffixIcon: Icon(Icons.access_time, color: primaryColor, size: 20.sp),
                                         ),
+                                        onTap: () async {
+                                          final pickedTime = await showTimePicker(
+                                            context: context,
+                                            initialTime: _selectedTime ?? TimeOfDay.now(),
+                                          );
+                                          if (pickedTime != null) {
+                                            setState(() {
+                                              _selectedTime = pickedTime;
+                                            });
+                                          }
+                                        },
                                       ),
                                     ],
                                   ),
                                 ),
                               ],
+                            ),
+                            SizedBox(height: 15.h),
+                            Text(
+                              "Task Type",
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: primaryColor,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            SizedBox(height: 5.h),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: DropdownButton<String>(
+                                borderRadius: BorderRadius.circular(10.r),
+                                isExpanded: true,
+                                value: _taskType,
+                                items: ["Any Time", "Scheduled", "Goal"].map((String type) {
+                                  return DropdownMenuItem<String>(
+                                    value: type,
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 15.w),
+                                      child: Text(type),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _taskType = newValue!;
+                                  });
+                                },
+                              ),
                             ),
                             SizedBox(height: 20.h),
                             Center(
@@ -391,10 +462,34 @@ class _HomePageState extends State<HomePage> {
                                 height: 0.05.sh,
                                 child: ElevatedButton(
                                   onPressed: () {
+                                    if (_taskNameController.text.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text("Task name is required")),
+                                      );
+                                      return;
+                                    }
+                                    if (_selectedDate == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text("Task date is required")),
+                                      );
+                                      return;
+                                    }
+                                    final date = controller.formatDate(_selectedDate!);
+                                    final time = _taskType == "Any Time"
+                                        ? ""
+                                        : _selectedTime?.format(context) ?? "";
+                                    controller.addTask(
+                                      title: _taskNameController.text,
+                                      description: _descriptionController.text,
+                                      goal: _selectedGoal,
+                                      date: date,
+                                      time: time,
+                                      type: _taskType,
+                                    );
                                     Navigator.pop(context);
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryColor, // Using primary color here
+                                    backgroundColor: primaryColor,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10.r),
                                     ),
@@ -423,7 +518,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-  // Header
+
   Widget _buildHeader() {
     return Padding(
       padding: EdgeInsets.only(top: 0.01.sh),
@@ -503,766 +598,416 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Task Card
   Widget _buildAnyTimeTasks() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TitleWithViewAll(
-          title: "Any Time Tasks",
-          showViewAll: true,
-          viewAllText: "Missed Task",
-        ),
-        SizedBox(height: 10.h),
-        _buildTaskCard(
-          title: "Read A Chapter Of Your Book",
-          subtitle: "Personal Development",
-          showOptions: false,
-          initialCompleted: true,
-        ),
-        _buildTaskCard(
-          title: "Drink 8 Glasses Of Water",
-          subtitle: "Stay Hydrated",
-          showOptions: true,
-        ),
-        _buildTaskCard(
-          title: "Meditate For 10 Minutes",
-          subtitle: "Focus On Breathing",
-          showOptions: true,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTaskCard({
-    required String title,
-    required String subtitle,
-    bool showOptions = false,
-    bool initialCompleted = false,
-  }) {
-    return StatefulBuilder(
-      builder: (context, setState) {
-        bool isCompleted = initialCompleted;
-        final checkmarkColor = isCompleted ? const Color(0xFF088408) : Colors.transparent;
-        final borderColor = isCompleted ? const Color(0xFF088408) : Colors.transparent;
-        final titleTextColor = isCompleted ? const Color(0xFF088408) : const Color(0xff1C2A45);
-        final subtitleTextColor = isCompleted ? const Color(0xFFAAAAAA) : Colors.white;
-
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              isCompleted = !isCompleted;
-            });
-          },
-          child: Row(
-            children: [
-              Container(
-                width: 10.w,
-                height: 0.1.sh,
-                padding: EdgeInsets.all(16.w),
-                margin: EdgeInsets.only(bottom: 10.h),
-                decoration: BoxDecoration(
-                  color: isCompleted ? borderColor2 : Colors.transparent,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(12.r),
-                    bottomLeft: Radius.circular(12.r),
-                  ),
-                  border: Border.all(
-                    color: isCompleted ? Colors.transparent : buttonColor,
-                    width: 1,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(16.w),
-                  margin: EdgeInsets.only(bottom: 10.h),
-                  height: 0.1.sh,
-                  decoration: BoxDecoration(
-                    color: isCompleted ? Colors.transparent : buttonColor,
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12.r),
-                      bottomRight: Radius.circular(12.r),
-                    ),
-                    border: Border.all(
-                      color: borderColor,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 30.w,
-                        height: 30.w,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: checkmarkColor,
-                          border: Border.all(
-                            color: isCompleted ? Colors.transparent : Colors.white,
-                            width: 2,
-                          ),
-                        ),
-                        child: isCompleted
-                            ? Icon(Icons.check, color: Colors.white, size: 16.sp)
-                            : null,
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 1.sw,
-                              height: 0.035.sh,
-                              child: Text(
-                                title,
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: titleTextColor,
-                                  fontFamily: 'Philosopher',
-                                ),
-                              ),
-                            ),
-                            Text(
-                              subtitle,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: subtitleTextColor,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (showOptions)
-                        PopupMenuButton<String>(
-                          icon: Icon(Icons.more_vert, color: Colors.white, size: 24.sp),
-                          onSelected: (value) {
-                            if (value == 'schedule') {
-                              print('Add to schedule selected');
-                              // Add your schedule logic here
-                            } else if (value == 'cancel') {
-                              print('Cancel task selected');
-                              // Add your cancel logic here
-                            }
-                          },
-                          itemBuilder: (BuildContext context) => [
-                            PopupMenuItem(
-                              value: 'schedule',
-                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                              height: 40.h,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.access_time, color: textColor, size: 18.sp),
-                                  SizedBox(width: 5.w),
-                                  Text(
-                                    "Add To Schedule",
-                                    style: TextStyle(
-                                      color: textColor,
-                                      fontSize: 10.sp,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'cancel',
-                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                              height: 40.h,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.delete_outline, color: const Color(0xFFFF5A5A), size: 18.sp),
-                                  SizedBox(width: 5.w),
-                                  Text(
-                                    "Cancel Task",
-                                    style: TextStyle(
-                                      color: const Color(0xFFFF5A5A),
-                                      fontSize: 10.sp,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16.r),
-                          ),
-                          color: Colors.white,
-                          constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // Schedule Card
-  Widget _buildTodaySchedule() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TitleWithViewAll(
-          title: "Today's Schedule",
-          showViewAll: false,
-        ),
-        SizedBox(height: 10.h),
-        _buildScheduleCard(
-          title: "Team Meeting",
-          subtitle: "Discuss Project Timeline",
-          time: "9am",
-          date: "02.10.2024",
-          showOptions: false,
-          initialCompleted: true,
-        ),
-        _buildScheduleCard(
-          title: "Lunch With Sarah",
-          subtitle: "At Cafe Milano",
-          time: "1pm",
-          date: "02.10.2024",
-          showOptions: false,
-          initialCompleted: true,
-        ),
-        _buildScheduleCard(
-          title: "Evening Reflection",
-          subtitle: "Journal About Your Day",
-          time: "8pm",
-          date: "02.10.2024",
-          showOptions: true,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildScheduleCard({
-    required String title,
-    required String subtitle,
-    required String time,
-    required String date,
-    bool showOptions = false,
-    bool initialCompleted = false,
-  }) {
-    return StatefulBuilder(
-      builder: (context, setState) {
-        bool isCompleted = initialCompleted;
-        final checkmarkColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
-        final borderColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
-        final titleTextColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
-        final subtitleTextColor = isCompleted ? Color(0xFFAAAAAA) : Colors.white;
-
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              isCompleted = !isCompleted;
-            });
-          },
-          child: Row(
-            children: [
-              Padding(
-                padding: EdgeInsets.only(bottom: 10.h, right: 10.w),
-                child: Text(
-                  time,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Color(0xffF1F1F1),
-                    fontFamily: 'Philosopher',
-                  ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.all(16.w),
-                margin: EdgeInsets.only(bottom: 10.h),
-                width: 10.w,
-                height: 0.09.sh,
-                decoration: BoxDecoration(
-                  color: isCompleted ? borderColor2 : Colors.transparent,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(12.r),
-                    bottomLeft: Radius.circular(12.r),
-                  ),
-                  border: Border.all(
-                    color: isCompleted ? Colors.transparent : buttonColor,
-                    width: 1,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(10.w),
-                  margin: EdgeInsets.only(bottom: 10.h),
-                  height: 0.09.sh,
-                  decoration: BoxDecoration(
-                    color: isCompleted ? Colors.transparent : buttonColor,
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12.r),
-                      bottomRight: Radius.circular(12.r),
-                    ),
-                    border: Border.all(
-                      color: borderColor,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 24.w,
-                        height: 24.w,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: checkmarkColor,
-                          border: Border.all(
-                            color: isCompleted ? Colors.transparent : Colors.white,
-                            width: 2,
-                          ),
-                        ),
-                        child: isCompleted
-                            ? Icon(Icons.check, color: Colors.white, size: 16.sp)
-                            : null,
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 1.sw,
-                              height: 0.03.sh,
-                              child: Text(
-                                title,
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: titleTextColor,
-                                  fontFamily: 'Philosopher',
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 5.h),
-                            Text(
-                              subtitle,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: subtitleTextColor,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (showOptions)
-                        PopupMenuButton<String>(
-                          icon: Icon(Icons.more_vert, color: Colors.white, size: 24.sp),
-                          onSelected: (value) {
-                            if (value == 'schedule') {
-                              print('Add to schedule selected');
-                              // Add your schedule logic here
-                            } else if (value == 'cancel') {
-                              print('Cancel task selected');
-                              // Add your cancel logic here
-                            }
-                          },
-                          itemBuilder: (BuildContext context) => [
-                            PopupMenuItem(
-                              value: 'schedule',
-                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                              height: 40.h,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.access_time, color: textColor, size: 18.sp),
-                                  SizedBox(width: 5.w),
-                                  Text(
-                                    "Add To Schedule",
-                                    style: TextStyle(
-                                      color: textColor,
-                                      fontSize: 10.sp,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'cancel',
-                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                              height: 40.h,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.delete_outline, color: const Color(0xFFFF5A5A), size: 18.sp),
-                                  SizedBox(width: 5.w),
-                                  Text(
-                                    "Cancel Task",
-                                    style: TextStyle(
-                                      color: const Color(0xFFFF5A5A),
-                                      fontSize: 10.sp,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16.r),
-                          ),
-                          color: Colors.white,
-                          constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // Today's Goal Card
-  Widget _buildTodayGoalTask() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TitleWithViewAll(
-          title: "Today's Goal Task",
-          showViewAll: true,
-        ),
-        SizedBox(height: 10.h),
-        _buildTodaysGoalCard(
-          title: "Morning Workout",
-          subtitle: "Goal: Lose 10 Lbs",
-          time: "9:00 AM",
-          showOptions: false,
-          initialCompleted: true,
-        ),
-        _buildTodaysGoalCard(
-          title: "Study Programming",
-          subtitle: "Goal: Get A Tech Job",
-          time: "1:00 PM",
-          showOptions: false,
-          initialCompleted: true,
-        ),
-        _buildTodaysGoalCard(
-          title: "Meal Prep For The Week",
-          subtitle: "Goal: Lose 10 Lbs",
-          time: "8:00 PM",
-          showOptions: true,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTodaysGoalCard({
-    required String title,
-    required String subtitle,
-    required String time,
-    bool showOptions = false,
-    bool initialCompleted = false,
-  }) {
-    return StatefulBuilder(
-      builder: (context, setState) {
-        bool isCompleted = initialCompleted;
-        final checkmarkColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
-        final borderColor = isCompleted ? Color(0xFF088408) : Colors.transparent;
-        final titleTextColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
-        final svgIconColor = isCompleted ? Color(0xFF088408) : Color(0xff1C2A45);
-        final subtitleTextColor = isCompleted ? Color(0xFFAAAAAA) : Colors.white;
-
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              isCompleted = !isCompleted;
-            });
-          },
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(16.w),
-                margin: EdgeInsets.only(bottom: 10.h),
-                width: 10.w,
-                height: 0.12.sh,
-                decoration: BoxDecoration(
-                  color: isCompleted ? borderColor2 : Colors.transparent,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(12.r),
-                    bottomLeft: Radius.circular(12.r),
-                  ),
-                  border: Border.all(
-                    color: isCompleted ? Colors.transparent : buttonColor,
-                    width: 1,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(10.w),
-                  margin: EdgeInsets.only(bottom: 10.h),
-                  height: 0.12.sh,
-                  decoration: BoxDecoration(
-                    color: isCompleted ? Colors.transparent : buttonColor,
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12.r),
-                      bottomRight: Radius.circular(12.r),
-                    ),
-                    border: Border.all(
-                      color: borderColor,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 24.w,
-                        height: 24.w,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: checkmarkColor,
-                          border: Border.all(
-                            color: isCompleted ? Colors.transparent : Colors.white,
-                            width: 2,
-                          ),
-                        ),
-                        child: isCompleted
-                            ? Icon(Icons.check, color: Colors.white, size: 16.sp)
-                            : null,
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 1.sw,
-                              height: 0.03.sh,
-                              child: Text(
-                                title,
-                                maxLines: 1,
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: titleTextColor,
-                                  fontFamily: 'Philosopher',
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 5.h),
-                            Text(
-                              subtitle,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: subtitleTextColor,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                            SizedBox(height: 8.h),
-                            Row(
-                              children: [
-                                SvgPicture.asset(
-                                  "assets/svg/time.svg",
-                                  width: 14.w,
-                                  height: 14.h,
-                                  colorFilter: ColorFilter.mode(svgIconColor, BlendMode.srcIn),
-                                ),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  time,
-                                  style: TextStyle(
-                                    fontSize: 10.sp,
-                                    color: subtitleTextColor,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (showOptions)
-                        PopupMenuButton<String>(
-                          icon: Icon(Icons.more_vert, color: Colors.white, size: 24.sp),
-                          onSelected: (value) {
-                            if (value == 'cancel') {
-                              print('Cancel task selected');
-                              // Add your cancel logic here
-                            }
-                          },
-                          itemBuilder: (BuildContext context) => [
-                            PopupMenuItem(
-                              value: 'cancel',
-                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                              height: 40.h,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.delete_outline, color: const Color(0xFFFF5A5A), size: 18.sp),
-                                  SizedBox(width: 5.w),
-                                  Text(
-                                    "Cancel Task",
-                                    style: TextStyle(
-                                      color: const Color(0xFFFF5A5A),
-                                      fontSize: 10.sp,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16.r),
-                          ),
-                          color: Colors.white,
-                          constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // Daily Goals Card
-  Widget _buildDailyGoals() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TitleWithViewAll(
-          title: "Goals Progress",
-          showViewAll: true,
-        ),
-        SizedBox(height: 10.h),
-        _buildGoalCard("Lose 10 Lbs", 70),
-        _buildGoalCard("Get A Tech Job", 20),
-      ],
-    );
-  }
-
-  Widget _buildGoalCard(String title, double initialProgress) {
-    return StatefulBuilder(
-      builder: (context, setState) {
-        double progress = initialProgress;
-        return Row(
+    final controller = Get.find<CalendarController>();
+    return Obx(() {
+      final selectedDate = controller.formatDate(controller.selectedDay.value);
+      final tasks = controller.getTasksForDate(selectedDate).where((task) => task.type == "Any Time").toList();
+      if (tasks.isEmpty) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: EdgeInsets.all(12.w),
-              margin: EdgeInsets.only(bottom: 10.h),
-              width: 10.w,
-              height: 0.13.sh,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12.r),
-                  bottomLeft: Radius.circular(12.r),
-                ),
-                border: Border.all(
-                  color: borderColor,
-                  width: 1,
-                ),
-              ),
+            TitleWithViewAll(
+              title: "Any Time Tasks",
+              showViewAll: true,
+              viewAllText: "Missed Task",
             ),
-            Expanded(
-              child: Container(
-                height: 0.13.sh,
-                padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 15.h),
-                margin: EdgeInsets.only(bottom: 10.h),
-                decoration: BoxDecoration(
-                  color: buttonColor,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(12.r),
-                    bottomRight: Radius.circular(12.r),
-                  ),
-                  border: Border.all(
-                    color: borderColor,
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 20.sp,
-                            color: Colors.white,
-                            fontFamily: 'Philosopher',
-                          ),
-                        ),
-                        Spacer(),
-                        Text(
-                          "${progress.toInt()}%",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8.h),
-                    TweenAnimationBuilder(
-                      tween: Tween<double>(begin: 0, end: progress),
-                      duration: Duration(seconds: 1),
-                      builder: (context, value, child) {
-                        return LinearProgressIndicator(
-                          value: value / 100,
-                          backgroundColor: Color(0xFF1C2A45),
-                          color: Colors.white,
-                          minHeight: 8.h,
-                          borderRadius: BorderRadius.circular(10.r),
-                        );
-                      },
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Consistency: 80%",
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.white,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            // Add action for viewing tasks
-                          },
-                          child: Text(
-                            "View Tasks",
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: subTextColor2,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+            SizedBox(height: 10.h),
+            Text(
+              "No Any Time Tasks",
+              style: TextStyle(color: Colors.white, fontSize: 14.sp, fontFamily: 'Poppins'),
             ),
           ],
         );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TitleWithViewAll(
+            title: "Any Time Tasks",
+            showViewAll: true,
+            viewAllText: "Missed Task",
+          ),
+          SizedBox(height: 10.h),
+          ...tasks.map((task) => _buildTaskCard(
+            task: task,
+            showOptions: true,
+          )),
+        ],
+      );
+    });
+  }
+
+  Widget _buildTaskCard({
+    required Task task,
+    bool showOptions = false,
+  }) {
+    final controller = Get.find<CalendarController>();
+    return GestureDetector(
+      onTap: () {
+        controller.toggleTaskCompletion(task.id);
       },
+      child: Row(
+        children: [
+          AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            width: 10.w,
+            height: 0.1.sh,
+            margin: EdgeInsets.only(bottom: 10.h),
+            decoration: BoxDecoration(
+              color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.r),
+                bottomLeft: Radius.circular(12.r),
+              ),
+              border: Border.all(
+                color: task.isCompleted ? Color(0xFF088408) : buttonColor,
+                width: 1,
+              ),
+            ),
+          ),
+          Expanded(
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              padding: EdgeInsets.all(16.w),
+              margin: EdgeInsets.only(bottom: 10.h),
+              height: 0.1.sh,
+              decoration: BoxDecoration(
+                color: task.isCompleted ? Colors.transparent : buttonColor,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(12.r),
+                  bottomRight: Radius.circular(12.r),
+                ),
+                border: Border.all(
+                  color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    width: 30.w,
+                    height: 30.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
+                      border: Border.all(
+                        color: task.isCompleted ? Colors.transparent : Colors.white,
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: AnimatedOpacity(
+                        duration: Duration(milliseconds: 200),
+                        opacity: task.isCompleted ? 1.0 : 0.0,
+                        child: Icon(Icons.check, color: Colors.white, size: 16.sp),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 1.sw,
+                          height: 0.035.sh,
+                          child: Text(
+                            task.title,
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w700,
+                              color: task.isCompleted ? Color(0xFF088408) : Color(0xff1C2A45),
+                              fontFamily: 'Philosopher',
+                            ),
+                          ),
+                        ),
+                        Text(
+                          task.goal,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: task.isCompleted ? Color(0xFFAAAAAA) : Colors.white,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (showOptions)
+                    PopupMenuButton<String>(
+                      icon: Icon(Icons.more_vert, color: Colors.white, size: 24.sp),
+                      onSelected: (value) async {
+                        if (value == 'schedule') {
+                          final pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          );
+                          if (pickedDate != null) {
+                            final pickedTime = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.now(),
+                            );
+                            if (pickedTime != null) {
+                              controller.scheduleTask(
+                                task.id,
+                                controller.formatDate(pickedDate),
+                                pickedTime.format(context),
+                              );
+                            }
+                          }
+                        } else if (value == 'cancel') {
+                          controller.cancelTask(task.id);
+                        }
+                      },
+                      itemBuilder: (BuildContext context) => [
+                        PopupMenuItem(
+                          value: 'schedule',
+                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                          height: 40.h,
+                          child: Row(
+                            children: [
+                              Icon(Icons.access_time, color: textColor, size: 18.sp),
+                              SizedBox(width: 5.w),
+                              Text(
+                                "Add To Schedule",
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 10.sp,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'cancel',
+                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                          height: 40.h,
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline, color: const Color(0xFFFF5A5A), size: 18.sp),
+                              SizedBox(width: 5.w),
+                              Text(
+                                "Cancel Task",
+                                style: TextStyle(
+                                  color: const Color(0xFFFF5A5A),
+                                  fontSize: 10.sp,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      color: Colors.white,
+                      constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  // Build Method
+  Widget _buildTodaySchedule() {
+    final controller = Get.find<CalendarController>();
+    return Obx(() {
+      final selectedDate = controller.formatDate(controller.selectedDay.value);
+      final tasks = controller.getTasksForDate(selectedDate).where((task) => task.type == "Scheduled").toList();
+      if (tasks.isEmpty) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TitleWithViewAll(
+              title: "${isSameDay(controller.selectedDay.value, DateTime.now()) ? 'Today\'s' : controller.formatDate(controller.selectedDay.value)} Schedule",
+              showViewAll: false,
+            ),
+            SizedBox(height: 10.h),
+            Text(
+              "No Scheduled Tasks",
+              style: TextStyle(color: Colors.white, fontSize: 14.sp, fontFamily: 'Poppins'),
+            ),
+          ],
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TitleWithViewAll(
+            title: "${isSameDay(controller.selectedDay.value, DateTime.now()) ? 'Today\'s' : controller.formatDate(controller.selectedDay.value)} Schedule",
+            showViewAll: false,
+          ),
+          SizedBox(height: 10.h),
+          ...tasks.map((task) => _buildScheduleCard(
+            task: task,
+            showOptions: true,
+          )),
+        ],
+      );
+    });
+  }
+
+  Widget _buildScheduleCard({
+    required Task task,
+    bool showOptions = false,
+  }) {
+    final controller = Get.find<CalendarController>();
+    return GestureDetector(
+      onTap: () {
+        controller.toggleTaskCompletion(task.id);
+      },
+      child: Row(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(bottom: 10.h, right: 10.w),
+            child: Text(
+              task.time,
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: Color(0xffF1F1F1),
+                fontFamily: 'Philosopher',
+              ),
+            ),
+          ),
+          AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            width: 10.w,
+            height: 0.09.sh,
+            margin: EdgeInsets.only(bottom: 10.h),
+            decoration: BoxDecoration(
+              color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.r),
+                bottomLeft: Radius.circular(12.r),
+              ),
+              border: Border.all(
+                color: task.isCompleted ? Color(0xFF088408) : buttonColor,
+                width: 1,
+              ),
+            ),
+          ),
+          Expanded(
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              padding: EdgeInsets.all(10.w),
+              margin: EdgeInsets.only(bottom: 10.h),
+              height: 0.09.sh,
+              decoration: BoxDecoration(
+                color: task.isCompleted ? Colors.transparent : buttonColor,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(12.r),
+                  bottomRight: Radius.circular(12.r),
+                ),
+                border: Border.all(
+                  color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    width: 24.w,
+                    height: 24.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
+                      border: Border.all(
+                        color: task.isCompleted ? Colors.transparent : Colors.white,
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: AnimatedOpacity(
+                        duration: Duration(milliseconds: 200),
+                        opacity: task.isCompleted ? 1.0 : 0.0,
+                        child: Icon(Icons.check, color: Colors.white, size: 16.sp),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 1.sw,
+                          height: 0.03.sh,
+                          child: Text(
+                            task.title,
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w700,
+                              color: task.isCompleted ? Color(0xFF088408) : Color(0xff1C2A45),
+                              fontFamily: 'Philosopher',
+                            ),
+                          ),
+                        ),
+                        Text(
+                          task.goal,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: task.isCompleted ? Color(0xFFAAAAAA) : Colors.white,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (showOptions)
+                    PopupMenuButton<String>(
+                      icon: Icon(Icons.more_vert, color: Colors.white, size: 24.sp),
+                      onSelected: (value) {
+                        if (value == 'cancel') {
+                          controller.cancelTask(task.id);
+                        }
+                      },
+                      itemBuilder: (BuildContext context) => [
+                        PopupMenuItem(
+                          value: 'cancel',
+                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                          height: 40.h,
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline, color: const Color(0xFFFF5A5A), size: 18.sp),
+                              SizedBox(width: 5.w),
+                              Text(
+                                "Cancel Task",
+                                style: TextStyle(
+                                  color: const Color(0xFFFF5A5A),
+                                  fontSize: 10.sp,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      color: Colors.white,
+                      constraints: BoxConstraints(minWidth: 140.w, maxWidth: 140.w),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1278,7 +1023,11 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const CalendarWidget(),
+            SizedBox(height: 5.h),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.w),
+              child: CalendarWidget(),
+            ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: _buildAnyTimeTasks(),
@@ -1288,16 +1037,6 @@ class _HomePageState extends State<HomePage> {
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: _buildTodaySchedule(),
             ),
-     /*       SizedBox(height: 20.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: _buildTodayGoalTask(),
-            ),
-            SizedBox(height: 20.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: _buildDailyGoals(),
-            ),*/
             SizedBox(height: 100.h),
           ],
         ),

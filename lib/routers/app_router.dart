@@ -45,8 +45,8 @@ class AppPages {
     GetPage(name: Routes.welcome, page: () => WelcomeScreen(), transition: Transition.rightToLeftWithFade),
     //>>>>>>>>>>>>>>>>Login>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     GetPage(name: Routes.logIn, page: () => LogInScreen(), transition: Transition.size),
-    GetPage(name: Routes.forgetPassword, page: () => ForgotPasswordScreen(), transition: Transition.zoom),
-    GetPage(name: Routes.otpVerification, page: () => OtpVerificationScreen(), transition: Transition.size),
+    GetPage(name: Routes.forgetPassword, page: () => ForgotPasswordScreen(), transition: Transition.rightToLeft),
+    GetPage(name: Routes.otpVerification, page: () => OtpVerificationScreen(), transition: Transition.cupertinoDialog),
     GetPage(name: Routes.resetPassword , page: () => ResetPasswordScreen(), transition: Transition.size),
     GetPage(name: Routes.successResetPassword , page: () => PasswordChangedScreen(), transition: Transition.fadeIn),
    //>>>>>>>>>>>>>>>>SignUp>>>>>>>>>>>>>>>>>>>>>>>>>>      >>>>>

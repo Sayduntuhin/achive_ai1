@@ -1,23 +1,23 @@
 import 'package:achive_ai/themes/colors.dart';
+import 'package:achive_ai/view/widgets/app_logo.dart';
+import 'package:achive_ai/view/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import '../../widgets/app_logo.dart';
-import '../../widgets/custom_button.dart';
+import 'package:logger/logger.dart';
+import '../../../controller/reset_pass_controller.dart';
 import '../widgets/custom_textfield.dart';
 
 class ResetPasswordScreen extends StatelessWidget {
-  final TextEditingController newPasswordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
-
-  ResetPasswordScreen({super.key});
-
+  const ResetPasswordScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final ResetPasswordController controller = Get.put(ResetPasswordController());
+    final Logger logger = Logger();
+
     return Scaffold(
-      backgroundColor: backgroundColor, // Background color
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -25,6 +25,7 @@ class ResetPasswordScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                /// *** Back Button ***
                 Align(
                   alignment: Alignment.topLeft,
                   child: Container(
@@ -47,7 +48,7 @@ class ResetPasswordScreen extends StatelessWidget {
                 /// *** App Logo ***
                 AppLogo(),
                 SizedBox(height: 0.03.sh),
-                /// *** Forgot Password Title ***
+                /// *** Create New Password Title ***
                 Text(
                   "Create New Password",
                   textAlign: TextAlign.center,
@@ -70,39 +71,62 @@ class ResetPasswordScreen extends StatelessWidget {
                     color: secondaryTextColor.withAlpha(100),
                   ),
                 ),
-        
                 SizedBox(height: 20.h),
-        
-                /// *** Email Input Field ***
-                CustomTextField(
+                /// *** Error Message ***
+                Obx(() => controller.errorMessage.isNotEmpty
+                    ? Padding(
+                  padding: EdgeInsets.only(bottom: 10.h),
+                  child: Text(
+                    controller.errorMessage.value,
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12.sp,
+                      fontFamily: "Poppins",
+                    ),
+                  ),
+                )
+                    : const SizedBox.shrink()),
+                /// *** New Password Input Field ***
+                Obx(() => CustomTextField(
                   hintText: "New Password",
-                  controller: newPasswordController,
-                ),
-                SizedBox(height: 20.h),
-                CustomTextField(
-                  hintText: "Confirm Password",
-                  controller: confirmPasswordController,
-                ),
-        
-                SizedBox(height: 30.h),
-        
-                /// *** Reset Password  Button ***
-                CustomButton(
-                  text: "Reset Password",
-                  backgroundColor: buttonColor,
-                  onPressed: () {
-                 /*   Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      "/successResetPassword", // ✅ Navigate to login screen
-                          (route) => false, // ✅ Removes all previous routes
-                    );*/
-                    Get.offAllNamed('/successResetPassword');
+                  controller: controller.newPasswordController,
+                  isPassword: true,
+                  enabled: !controller.isLoading.value,
+                  hasError: controller.isNewPasswordError.value,
+                  onChanged: (value) {
+                    logger.d('New password changed: value=$value');
+                    controller.errorMessage.value = '';
+                    controller.isNewPasswordError.value = false;
+                    controller.update();
                   },
-        
-        
-        
-                ),
-        
+                )),
+                SizedBox(height: 20.h),
+                /// *** Confirm Password Input Field ***
+                Obx(() => CustomTextField(
+                  hintText: "Confirm Password",
+                  controller: controller.confirmPasswordController,
+                  isPassword: true,
+                  enabled: !controller.isLoading.value,
+                  hasError: controller.isConfirmPasswordError.value,
+                  onChanged: (value) {
+                    logger.d('Confirm password changed: value=$value');
+                    controller.errorMessage.value = '';
+                    controller.isConfirmPasswordError.value = false;
+                    controller.update();
+                  },
+                )),
+                SizedBox(height: 30.h),
+                /// *** Reset Password Button ***
+                Obx(() => CustomButton(
+                  text: controller.isLoading.value ? "Resetting..." : "Reset Password",
+                  backgroundColor: buttonColor,
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : () {
+                    logger.d('Reset Password pressed: email=${controller.email}, otp=${controller.otp}');
+                    controller.resetPassword();
+                  },
+                )),
               ],
             ),
           ),

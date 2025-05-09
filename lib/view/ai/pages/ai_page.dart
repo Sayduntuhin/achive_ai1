@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import '../../../controller/chat_controller.dart';
 import '../../../themes/colors.dart';
+import '../widgets/type_indicator.dart';
 
 class ChatBotScreen extends StatefulWidget {
   const ChatBotScreen({super.key});
@@ -11,14 +13,16 @@ class ChatBotScreen extends StatefulWidget {
   State<ChatBotScreen> createState() => _ChatBotScreenState();
 }
 
-class _ChatBotScreenState extends State<ChatBotScreen> {
+class _ChatBotScreenState extends State<ChatBotScreen> with TickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  late final ChatController _controller;
 
-  // Empty message list initially
-  final List<Map<String, dynamic>> _messages = [];
-
-  bool _hasConversationEnded = false;
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(ChatController());
+  }
 
   /// Scroll to the bottom smoothly
   void _scrollToBottom() {
@@ -31,31 +35,6 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
         );
       }
     });
-  }
-
-  /// Send Message & AI Reply
-  void _sendMessage() {
-    if (_messageController.text.isNotEmpty) {
-      setState(() {
-        // Add user message
-        _messages.add({
-          "text": _messageController.text,
-          "isUser": true
-        });
-
-        // Add AI response
-        _messages.add({
-          "text": "It's a completely normal feeling! But you're not alone. If you had everything organized simply, life would be much better, wouldn't it?",
-          "isUser": false,
-        });
-
-        _messageController.clear();
-
-        // Mark conversation as having at least one exchange
-        _hasConversationEnded = true;
-      });
-      _scrollToBottom();
-    }
   }
 
   @override
@@ -82,30 +61,36 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
             children: [
               /// Chat Messages
               Expanded(
-                child: ListView(
-                  controller: _scrollController,
-                  padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-                  children: [
-                    // Build all chat messages
-                    ..._messages.map((message) => _buildChatBubble(message)),
-
-                    // Add some bottom padding to ensure messages don't get hidden behind the input
-                    SizedBox(height: _hasConversationEnded ? 60.h : 0),
-                  ],
-                ),
+                child: Obx(() {
+                  // Scroll to bottom when messages or typing state changes
+                  WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                  return ListView(
+                    controller: _scrollController,
+                    padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+                    children: [
+                      // Build all chat messages
+                      ..._controller.messages.map((message) => _buildChatBubble(message)),
+                      // Typing indicator
+                      if (_controller.isTyping.value) _buildTypingIndicator(),
+                      // Bottom padding
+                      SizedBox(height: _controller.hasConversationEnded.value ? 60.h : 0),
+                    ],
+                  );
+                }),
               ),
               /// Message Input Field
               _buildMessageInput(),
             ],
           ),
 
-          // Add to Goals button - positioned at bottom left
-          if (_hasConversationEnded)
-            Positioned(
-              left: 20.w,
-              bottom: 80.h, // Positioned above the message input
-              child: _buildAddToGoalsButton(),
-            ),
+          // Add to Goals button
+          Obx(() => _controller.hasConversationEnded.value
+              ? Positioned(
+            left: 20.w,
+            bottom: 80.h,
+            child: _buildAddToGoalsButton(),
+          )
+              : SizedBox.shrink()),
         ],
       ),
     );
@@ -124,7 +109,7 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
           // AI Avatar (only shown for AI messages)
           if (!isUser) _buildAvatar(isUser: false),
 
-          // Message content - simplified with no decorations
+          // Message content
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.w),
             child: Container(
@@ -215,10 +200,17 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
                   hintStyle: TextStyle(color: textColor2),
                   border: InputBorder.none,
                 ),
+                onSubmitted: (_) {
+                  _controller.sendMessage(_messageController.text.trim());
+                  _messageController.clear();
+                },
               ),
             ),
             GestureDetector(
-              onTap: _sendMessage,
+              onTap: () {
+                _controller.sendMessage(_messageController.text.trim());
+                _messageController.clear();
+              },
               child: SvgPicture.asset(
                 "assets/svg/chat_button.svg",
                 width: 40.w,
@@ -230,4 +222,25 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
       ),
     );
   }
+
+  /// Typing Indicator Widget
+  Widget _buildTypingIndicator() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          // AI Avatar
+          _buildAvatar(isUser: false),
+          // Typing dots
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.w,vertical: 12.h),
+            child: TypingIndicator(),
+          ),
+        ],
+      ),
+    );
+  }
 }
+

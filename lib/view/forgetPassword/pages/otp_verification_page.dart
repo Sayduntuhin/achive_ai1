@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:get/get.dart';
+import 'package:logger/logger.dart';
+import '../../../api/api_service.dart';
 import '../../../themes/colors.dart';
 import '../../widgets/app_logo.dart';
 import '../../widgets/custom_button.dart';
+import '../../widgets/snackbar_helper.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({super.key});
@@ -14,27 +17,85 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  late TextEditingController otpController;
+  final TextEditingController otpController = TextEditingController();
+  final Logger logger = Logger();
+  late String email;
+  final ApiService _apiService = ApiService();
 
   @override
   void initState() {
     super.initState();
-    otpController = TextEditingController();
+    // Retrieve email from arguments
+    email = Get.arguments?['email'] ?? '';
+    if (email.isEmpty) {
+      logger.e('No email received in OtpVerificationScreen');
+      SnackbarHelper.showErrorSnackbar('Error: No email provided');
+      // Defer navigation to after build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.offNamed('/forgotPassword');
+      });
+    }
   }
 
-/*
   @override
   void dispose() {
-    otpController.dispose(); // ✅ Safe disposal
+    otpController.dispose();
     super.dispose();
   }
-*/
 
+  // Resend OTP
+  Future<void> _resendOtp() async {
+    try {
+      final response = await ApiService().requestPasswordReset(email: email);
+      logger.d('Resend OTP response: status=${response['success']}, message=${response['message']}');
+      if (response['success']) {
+        SnackbarHelper.showSuccessSnackbar('OTP resent to $email');
+      } else {
+        String displayMessage = response['message'];
+        if (displayMessage.contains('No PerfectUser matches')) {
+          displayMessage = 'No account found with this email';
+        }
+        SnackbarHelper.showErrorSnackbar(displayMessage);
+      }
+    } catch (e) {
+      logger.e('Error resending OTP: $e');
+      SnackbarHelper.showErrorSnackbar('Failed to resend OTP');
+    }
+  }
+  Future<void> _verifyOtp() async {
+    if (otpController.text.length != 4) {
+      SnackbarHelper.showErrorSnackbar('Please enter a 4-digit OTP');
+      return;
+    }
+
+    try {
+      final response = await _apiService.verifyOtp(
+        email: email,
+        otp: otpController.text,
+      );
+      logger.d('Verify OTP response: $response');
+
+      if (response['success'] == true && response['message'].toLowerCase() == 'otp is correct') {
+        logger.d('OTP verification successful, navigating to /resetPassword');
+        SnackbarHelper.showSuccessSnackbar('OTP verified successfully');
+        Get.toNamed('/resetPassword', arguments: {
+          'email': email,
+          'otp': otpController.text,
+        });
+      } else {
+        logger.w('OTP verification failed: ${response['error'] ?? 'Unknown error'}');
+        SnackbarHelper.showErrorSnackbar(response['error'] ?? 'Failed to verify OTP');
+      }
+    } catch (e) {
+      logger.e('Error verifying OTP: $e');
+      SnackbarHelper.showErrorSnackbar('Failed to verify OTP');
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      resizeToAvoidBottomInset: false, // ✅ Prevent UI jump on keyboard
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -61,11 +122,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   ),
                 ),
                 SizedBox(height: 0.015.sh),
-                /// *** App Logo & Title ***
+                /// *** App Logo ***
                 AppLogo(),
-
                 SizedBox(height: 0.03.sh),
-
                 /// *** OTP Verification Title ***
                 Text(
                   "OTP Verification",
@@ -77,12 +136,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     color: secondaryTextColor,
                   ),
                 ),
-
                 SizedBox(height: 10.h),
-
                 /// *** Instruction Text ***
                 Text(
-                  "Enter the verification code we just sent on\nyour email address.",
+                  "Enter the verification code sent to\n$email",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: "Poppins",
@@ -91,9 +148,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     color: secondaryTextColor.withAlpha(100),
                   ),
                 ),
-
                 SizedBox(height: 20.h),
-
                 /// *** OTP Input Fields ***
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -117,25 +172,18 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     ),
                     enableActiveFill: true,
                     onChanged: (value) {
-                      debugPrint("OTP Entered: $value");
+                      logger.d("OTP Entered: $value");
                     },
                   ),
                 ),
-
                 SizedBox(height: 20.h),
-
                 /// *** Verify OTP Button ***
                 CustomButton(
-                  text: "Otp Verified",
+                  text: "Verify OTP",
                   backgroundColor: buttonColor,
-                  onPressed: () {
-      /*              Navigator.pushNamed(context, "/resetPassword");*/
-                    Get.toNamed('/resetPassword');
-                  },
+                  onPressed: _verifyOtp,
                 ),
-
                 SizedBox(height: 20.h),
-
                 /// *** Resend OTP Link ***
                 Center(
                   child: Text.rich(
@@ -149,9 +197,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       children: [
                         WidgetSpan(
                           child: GestureDetector(
-                            onTap: () {
-                              // TODO: Handle Resend OTP
-                            },
+                            onTap: _resendOtp,
                             child: Text(
                               "Resend",
                               style: TextStyle(
@@ -167,7 +213,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     ),
                   ),
                 ),
-
                 SizedBox(height: 20.h),
               ],
             ),

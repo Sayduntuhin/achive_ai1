@@ -1,18 +1,20 @@
 import 'package:achive_ai/themes/colors.dart';
 import 'package:achive_ai/view/widgets/app_logo.dart';
+import 'package:achive_ai/view/widgets/custom_button.dart';
+import 'package:achive_ai/view/widgets/custom_loading_indicator.dart';
+import 'package:achive_ai/view/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_textfield.dart';
-import '../../widgets/custom_loading_indicator.dart';
-import '../../widgets/snackbar_helper.dart';
+import '../../../controller/login_in_controller.dart';
 
 class LogInScreen extends StatelessWidget {
   const LogInScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final LoginController controller = Get.put(LoginController());
+
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
@@ -27,8 +29,7 @@ class LogInScreen extends StatelessWidget {
                 SizedBox(height: 0.1.sh),
                 /// *** LogIn Card ***
                 Container(
-                  padding:
-                  EdgeInsets.symmetric(horizontal: 20.w, vertical: 25.h),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 25.h),
                   decoration: BoxDecoration(
                     color: backgroundColor2,
                     borderRadius: BorderRadius.circular(15.r),
@@ -37,7 +38,7 @@ class LogInScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// *** Sign-Up Title ***
+                      /// *** LogIn Title ***
                       Text(
                         "Log In",
                         style: TextStyle(
@@ -48,44 +49,68 @@ class LogInScreen extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 20.h),
+
                       /// *** Email Field ***
-                      buildTextField("E-mail or Mobile Number"),
+                      buildTextField(
+                        "Enter Your E-mail",
+                        controller: controller.emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        enabled: !controller.isLoading.value,
+                        hasError: controller.isEmailError.value,
+                        onChanged: (value) => controller.errorMessage.value = '',
+                      ),
                       SizedBox(height: 10.h),
                       /// *** Password Field ***
-                      buildTextField("Password", isPassword: true),
+                      buildTextField(
+                        "Password",
+                        controller: controller.passwordController,
+                        isPassword: true,
+                        enabled: !controller.isLoading.value,
+                        hasError: controller.isPasswordError.value,
+                        onChanged: (value) => controller.errorMessage.value = '',
+                      ),
                       Row(
                         children: [
                           Spacer(),
                           TextButton(
-                              onPressed: () {
-                                Get.toNamed('/forgetPassword');
-                              },
-                              style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: Size(50, 30),
-                                  tapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                                  alignment: Alignment.centerLeft),
-                              child: Text(
-                                "Forgot Password?",
-                                style: TextStyle(
-                                  color: subTextColor,
-                                  fontFamily: "Poppins",
-                                  fontSize: 11.sp,
-                                ),
-                              )),
+                            onPressed: controller.isLoading.value
+                                ? null
+                                : () {
+                              Get.toNamed('/forgetPassword');
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size(50, 30),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              alignment: Alignment.centerLeft,
+                            ),
+                            child: Text(
+                              "Forgot Password?",
+                              style: TextStyle(
+                                color: subTextColor,
+                                fontFamily: "Poppins",
+                                fontSize: 11.sp,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                      SizedBox(
-                        height: 0.03.sh,
-                      ),
-                      /// *** Sign-Up Button ***
-                      CustomButton(
-                        text: "Log In",
+                      SizedBox(height: 0.03.sh),
+                      /// *** LogIn Button ***
+                      Obx(() => CustomButton(
+                        text: controller.isLoading.value
+                            ? "Logging In..."
+                            : "Log In",
                         backgroundColor: buttonColor,
-                        onPressed: () {
+                        onPressed: controller.isLoading.value ||
+                            !controller.isNetworkAvailable.value
+                            ? null
+                            : () async {
+                          FocusScope.of(context).unfocus();
+                          // Show loading dialog
                           showDialog(
                             context: context,
+                            barrierDismissible: false,
                             builder: (BuildContext context) {
                               return Dialog(
                                 backgroundColor: Colors.transparent,
@@ -93,16 +118,18 @@ class LogInScreen extends StatelessWidget {
                               );
                             },
                           );
-                          // Simulate a login process
-                          Future.delayed(Duration(seconds: 2), () {
-                            Get.back();
-                            SnackbarHelper.showSuccessSnackbar('Login Successful');
-                            Get.offAllNamed('/mainPage');
-                          });
+                          try {
+                            await controller.login();
+                          } finally {
+                            // Close dialog regardless of success or failure
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            }
+                          }
                         },
-                      ),
+                      )),
                       SizedBox(height: 15.h),
-                      /// *** Already have an account? Sign In ***
+                      /// *** Don't have an account? Sign Up ***
                       Center(
                         child: Text.rich(
                           TextSpan(
@@ -115,7 +142,9 @@ class LogInScreen extends StatelessWidget {
                             children: [
                               WidgetSpan(
                                 child: GestureDetector(
-                                  onTap: () {
+                                  onTap: controller.isLoading.value
+                                      ? null
+                                      : () {
                                     Get.offAllNamed('/signUp');
                                   },
                                   child: Text(
@@ -132,7 +161,7 @@ class LogInScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
