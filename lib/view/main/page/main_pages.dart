@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controller/buttom_navigation_controller.dart';
 import '../../../themes/colors.dart';
+import '../../goal/page/goal_page.dart';
 import '../../home/page/home_page.dart';
 import '../../setting/pages/setting_page.dart';
-import '../../task/page/task_page.dart';
 import '../widgets/custom_navigation_bar.dart';
 
 class MainScreen extends StatelessWidget {

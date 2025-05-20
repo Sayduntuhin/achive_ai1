@@ -1,6 +1,7 @@
 import 'package:achive_ai/routers/app_router.dart';
 import 'package:achive_ai/themes/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
@@ -9,6 +10,11 @@ import 'api/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   final AuthService authService = AuthService();
   final String initialRoute = await authService.isAuthenticated() ? Routes.mainPage : Routes.initial;
   final Logger logger = Logger();

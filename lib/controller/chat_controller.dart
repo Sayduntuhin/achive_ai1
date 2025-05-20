@@ -13,6 +13,9 @@ class ChatController extends GetxController {
   // Reactive typing indicator state
   final RxBool isTyping = false.obs;
 
+  // Reactive loading state
+  final RxBool isLoading = true.obs;
+
   // Conversation state
   final RxBool hasConversationEnded = false.obs;
 
@@ -73,6 +76,8 @@ class ChatController extends GetxController {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+    } finally {
+      isLoading.value = false;
     }
   }
 

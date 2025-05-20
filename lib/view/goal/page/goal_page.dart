@@ -2,8 +2,8 @@ import 'package:achive_ai/themes/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-
+import '../../../controller/goal_controller.dart';
+import '../../../model/goal.dart';
 import '../../widgets/title_with_view_all.dart';
 
 class GoalsPage extends StatelessWidget {
@@ -11,131 +11,86 @@ class GoalsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Using the same blue color for all cards as in the original image
-    final Color cardColor = primaryColor;
-    final Color buttonColor = subTextColor2;
+    // Initialize GoalController
+    Get.put(GoalController());
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          child: Column(
-            children: [
-              SizedBox(height: 40.h),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TitleWithViewAll(
-                  title: "Your Goals",
-                  titleFontSize: 24,
-                  showViewAll: false,
+      body: GetX<GoalController>(
+        builder: (controller) {
+          if (controller.isLoading.value) {
+            return Center(
+              child: CircularProgressIndicator(color: primaryColor),
+            );
+          }
+
+          if (controller.errorMessage.value.isNotEmpty) {
+            return Center(
+              child: Text(
+                controller.errorMessage.value,
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 14.sp,
+                  fontFamily: 'Poppins',
                 ),
               ),
-              SizedBox(height: 20.h),
+            );
+          }
 
-              GoalCard(
-                title: "Lose 10 Lbs",
-                description: "Get Healthier And More Fit By Losing Weight",
-                overallProgress: 70,
-                consistency: 30,
-                tasks: [
-                  TaskInfo(
-                    name: "Eat A Healthy Diet",
-                    remainingRepetitions: 72,
-                    consistency: 28,
-                  ),
-                  TaskInfo(
-                    name: "Work Out 3 Times",
-                    remainingRepetitions: 72,
-                    consistency: 28,
-                  ),
-                ],
-                cardColor: cardColor,
-                buttonColor: buttonColor,
+          if (controller.goals.isEmpty) {
+            return Center(
+              child: Text(
+                'No goals found',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14.sp,
+                  fontFamily: 'Poppins',
+                ),
               ),
-              SizedBox(height: 16.h),
+            );
+          }
 
-              // Career goal card
-              GoalCard(
-                title: "Get A Tech Job",
-                description: "Work Towards Securing A Developer Position",
-                overallProgress: 45,
-                consistency: 65,
-                tasks: [
-                  TaskInfo(
-                    name: "Complete Flutter Course",
-                    remainingRepetitions: 5,
-                    consistency: 85,
+          return SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.h),
+              child: Column(
+                children: [
+                  SizedBox(height: 40.h),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: TitleWithViewAll(
+                      title: "Your Goals",
+                      titleFontSize: 24,
+                      showViewAll: false,
+                    ),
                   ),
-                  TaskInfo(
-                    name: "Build Portfolio Projects",
-                    remainingRepetitions: 3,
-                    consistency: 40,
-                  ),
+                  SizedBox(height: 20.h),
+                  ...controller.goals.map((goal) => Padding(
+                    padding: EdgeInsets.only(bottom: 16.h),
+                    child: GoalCard(
+                      goal: goal,
+                      cardColor: primaryColor,
+                      buttonColor: subTextColor2,
+                    ),
+                  )),
                 ],
-                cardColor: cardColor,
-                buttonColor: buttonColor,
               ),
-              SizedBox(height: 16.h),
-
-              // Savings goal card
-              GoalCard(
-                title: "Save \$5,000",
-                description: "Build Financial Security For The Future",
-                overallProgress: 25,
-                consistency: 80,
-                tasks: [
-                  TaskInfo(
-                    name: "Monthly Budget Review",
-                    remainingRepetitions: 8,
-                    consistency: 90,
-                  ),
-                  TaskInfo(
-                    name: "Deposit to Savings",
-                    remainingRepetitions: 36,
-                    consistency: 75,
-                  ),
-                ],
-                cardColor: cardColor,
-                buttonColor: buttonColor,
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 }
 
-// Task information model
-class TaskInfo {
-  final String name;
-  final int remainingRepetitions;
-  final int consistency;
-
-  TaskInfo({
-    required this.name,
-    required this.remainingRepetitions,
-    required this.consistency,
-  });
-}
-
 class GoalCard extends StatefulWidget {
-  final String title;
-  final String description;
-  final int overallProgress;
-  final int consistency;
-  final List<TaskInfo> tasks;
+  final Goal goal;
   final Color cardColor;
   final Color buttonColor;
 
   const GoalCard({
     Key? key,
-    required this.title,
-    required this.description,
-    required this.overallProgress,
-    required this.consistency,
-    required this.tasks,
+    required this.goal,
     required this.cardColor,
     required this.buttonColor,
   }) : super(key: key);
@@ -162,7 +117,7 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
     // Main progress animation
     _progressAnimation = Tween<double>(
       begin: 0.0,
-      end: widget.overallProgress / 100,
+      end: widget.goal.progress / 100,
     ).animate(
       CurvedAnimation(
         parent: _animationController,
@@ -170,25 +125,23 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
       ),
     );
 
-    // Task animations with staggered effect - fixed to ensure end <= 1.0
+    // Task animations with staggered effect
     _taskAnimations = [];
-    for (int i = 0; i < widget.tasks.length; i++) {
-      final task = widget.tasks[i];
-      // Make sure we don't exceed 1.0 for the interval
+    for (int i = 0; i < widget.goal.tasks.length; i++) {
+      final task = widget.goal.tasks[i];
       double startTime = 0.3 + (i * 0.15);
-      // Cap end time to 1.0
-      double endTime = min(startTime + 0.5, 1.0);
+      double endTime = startTime + 0.5 > 1.0 ? 1.0 : startTime + 0.5;
 
       _taskAnimations.add(
-          Tween<double>(
-            begin: 0.0,
-            end: task.consistency / 100,
-          ).animate(
-            CurvedAnimation(
-              parent: _animationController,
-              curve: Interval(startTime, endTime, curve: Curves.easeInOut),
-            ),
-          )
+        Tween<double>(
+          begin: 0.0,
+          end: task.progress / 100,
+        ).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Interval(startTime, endTime, curve: Curves.easeInOut),
+          ),
+        ),
       );
     }
 
@@ -196,11 +149,6 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
     Future.delayed(Duration(milliseconds: 200), () {
       _animationController.forward();
     });
-  }
-
-  // Helper method to ensure the value is within bounds
-  double min(double a, double b) {
-    return a < b ? a : b;
   }
 
   @override
@@ -237,7 +185,7 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
               Transform.scale(
                 scale: Curves.easeInOut.transform(_animationController.value),
                 child: Text(
-                  widget.title,
+                  widget.goal.name,
                   style: TextStyle(
                     fontFamily: "Philosopher",
                     fontSize: 22.sp,
@@ -252,7 +200,7 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
               Opacity(
                 opacity: _animationController.value,
                 child: Text(
-                  widget.description,
+                  widget.goal.description,
                   style: TextStyle(
                     fontSize: 10.sp,
                     color: Colors.white,
@@ -267,7 +215,7 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Over All Progress",
+                    "Overall Progress",
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: titleColor2,
@@ -275,7 +223,7 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
                     ),
                   ),
                   Text(
-                    "${widget.overallProgress}%",
+                    "${widget.goal.progress.toStringAsFixed(2)}%",
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.bold,
@@ -299,9 +247,9 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
               ),
               SizedBox(height: 10.h),
 
-              // Consistency
+              // Consistency (assuming consistency is derived from tasks' average progress)
               Text(
-                "Consistency: ${widget.consistency}%",
+                "Consistency: ${(widget.goal.tasks.isNotEmpty ? widget.goal.tasks.map((t) => t.progress).reduce((a, b) => a + b) / widget.goal.tasks.length : 0).toStringAsFixed(2)}%",
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: Colors.white,
@@ -319,7 +267,7 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
 
               // Task Label
               Text(
-                "Task:",
+                "Tasks:",
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: Colors.white,
@@ -328,13 +276,13 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
               ),
               SizedBox(height: 10.h),
 
-              // Task list with animations - fixed to avoid crashes
-              for (int index = 0; index < widget.tasks.length; index++)
+              // Task list with subtasks
+              for (int index = 0; index < widget.goal.tasks.length; index++)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.tasks[index].name,
+                      widget.goal.tasks[index].name,
                       style: TextStyle(
                         fontSize: 10.sp,
                         color: titleColor2,
@@ -347,16 +295,15 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Remaining Repetitions: ${widget.tasks[index].remainingRepetitions}",
+                          "Progress: ${widget.goal.tasks[index].progress.toStringAsFixed(2)}%",
                           style: TextStyle(
                             fontSize: 8.sp,
                             color: Colors.white,
                             fontFamily: "Poppins",
-
                           ),
                         ),
                         Text(
-                          "Consistency: ${widget.tasks[index].consistency}",
+                          "Subtasks: ${widget.goal.tasks[index].subtasks.length}",
                           style: TextStyle(
                             fontSize: 8.sp,
                             color: Colors.black,
@@ -375,6 +322,50 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
                         minHeight: 6.h,
                       ),
                     ),
+                    SizedBox(height: 8.h),
+                    // Subtasks
+                    if (widget.goal.tasks[index].subtasks.isNotEmpty)
+                      Padding(
+                        padding: EdgeInsets.only(left: 16.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: widget.goal.tasks[index].subtasks.map((subtask) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  subtask.name,
+                                  style: TextStyle(
+                                    fontSize: 8.sp,
+                                    color: Colors.white,
+                                    fontFamily: "Poppins",
+                                  ),
+                                ),
+                                SizedBox(height: 2.h),
+                                Text(
+                                  "Progress: ${subtask.progress.toStringAsFixed(2)}%",
+                                  style: TextStyle(
+                                    fontSize: 8.sp,
+                                    color: Colors.white70,
+                                    fontFamily: "Poppins",
+                                  ),
+                                ),
+                                SizedBox(height: 4.h),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  child: LinearProgressIndicator(
+                                    value: subtask.progress / 100,
+                                    backgroundColor: backgroundColor,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    minHeight: 4.h,
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
                     SizedBox(height: 12.h),
                   ],
                 ),
@@ -391,7 +382,7 @@ class _GoalCardState extends State<GoalCard> with SingleTickerProviderStateMixin
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                       Get.toNamed("/viewTask");
+                        Get.toNamed("/viewTask", arguments: widget.goal);
                       },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,

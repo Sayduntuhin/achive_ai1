@@ -10,10 +10,10 @@ import 'package:achive_ai/view/setting/pages/manage_sub_page.dart';
 import 'package:achive_ai/view/setting/pages/privacy_policy.dart';
 import 'package:achive_ai/view/setting/pages/terms_&_conditions.dart';
 import 'package:achive_ai/view/signUp/pages/sign_up_page.dart';
-import 'package:achive_ai/view/task/page/view_task_page.dart';
 import 'package:achive_ai/view/welcome/pages/welcome_page.dart';
 import 'package:get/get.dart';
 import '../view/aiboost/page/aiboost_page.dart';
+import '../view/goal/page/view_task_page.dart';
 import '../view/setting/pages/personal_page.dart';
 import '../view/subcriptions/pages/upgrade_page.dart';
 

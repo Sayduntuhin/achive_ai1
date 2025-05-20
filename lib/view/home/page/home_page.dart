@@ -4,11 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../../widgets/title_with_view_all.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../../api/api_service.dart';
+import '../../../controller/any_time_task_controller.dart';
 import '../../../controller/calander_controller.dart';
-import '../widgets/task.dart';
+import '../../../controller/schedule_task_controller.dart';
+import '../../../model/task.dart';
+import '../../widgets/snackbar_helper.dart';
+import '../../widgets/title_with_view_all.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,19 +33,13 @@ class _HomePageState extends State<HomePage> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
 
-  final List<String> goalOptions = [
-    "Lose 10 Lbs",
-    "Get A Tech Job",
-    "Eat a Healthy Diet",
-    "Exercise Daily",
-    "Get Enough Sleep",
-    "Complete a Course",
-  ];
-
   @override
   void initState() {
     super.initState();
+    Get.put(ApiService());
     Get.put(CalendarController());
+    Get.put(ScheduleTaskController());
+    Get.put(TaskController());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowDisclaimerDialog();
     });
@@ -104,7 +106,10 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       Text(
                         'MyPerfectLife AI is designed to provide guidance and suggestions to help you achieve your personal goals. However, please note the following:',
-                        style: TextStyle(fontSize: 10.sp, fontFamily: 'Poppins', color: Colors.black),
+                        style: TextStyle(
+                            fontSize: 10.sp,
+                            fontFamily: 'Poppins',
+                            color: Colors.black),
                       ),
                       SizedBox(height: 16),
                       _bulletPoint(
@@ -129,11 +134,12 @@ class _HomePageState extends State<HomePage> {
                             Navigator.of(context).pop();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF4A8F9F),
+                            backgroundColor: primaryColor,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8.0),
                             ),
-                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
                           ),
                           child: Text(
                             'I Understand, Continue',
@@ -154,32 +160,111 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-
+  void _showCompletionDialog(String taskTitle) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          backgroundColor: Colors.white,
+          child: Container(
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Animated Checkmark
+                Lottie.asset(
+                  'assets/lottie/checkmark.json',
+                  width: 100.w,
+                  height: 100.h,
+                  fit: BoxFit.contain,
+                  repeat: false, // Play animation once
+                ),
+                SizedBox(height: 16.h),
+                // Title
+                Text(
+                  'Great Job',
+                  style: TextStyle(
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xff1C2A45),
+                    fontFamily: 'Philosopher',
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                // Subtitle
+                Text(
+                  "You've completed $taskTitle\nKeep up the good work and stay consistent.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: Colors.grey[600],
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                // Complete Button
+                SizedBox(
+                  width: 0.5.sw,
+                  height: 0.05.sh,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: greenColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                    ),
+                    child: Text(
+                      'Complete',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
   Widget _bulletPoint(String text) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 7.0),
-          child: SvgPicture.asset("assets/svg/bullet.svg", width: 5.w, height: 5.h),
+          child: SvgPicture.asset("assets/svg/bullet.svg",
+              width: 5.w, height: 5.h),
         ),
         SizedBox(width: 8.w),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(fontSize: 10.sp, fontFamily: 'Poppins', color: Colors.black),
+            style: TextStyle(
+                fontSize: 10.sp, fontFamily: 'Poppins', color: Colors.black),
           ),
         ),
       ],
     );
   }
 
+
   void _openTaskDialog() {
-    final controller = Get.find<CalendarController>();
-    _selectedGoal = goalOptions.first;
-    _selectedDate = controller.selectedDay.value;
-    _selectedTime = TimeOfDay.now();
-    _taskType = "Any Time";
+    final calendarController = Get.find<CalendarController>();
+    final taskController = Get.find<TaskController>();
+    final scheduleController = Get.find<ScheduleTaskController>();
+    _selectedDate = null;
+    _selectedTime = null;
     _taskNameController.clear();
     _descriptionController.clear();
 
@@ -197,7 +282,7 @@ class _HomePageState extends State<HomePage> {
               child: Container(
                 padding: EdgeInsets.all(20),
                 constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                  maxHeight: MediaQuery.of(context).size.height * 0.9,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -210,7 +295,7 @@ class _HomePageState extends State<HomePage> {
                           style: TextStyle(
                             fontSize: 24.sp,
                             fontWeight: FontWeight.w500,
-                            color: primaryColor,
+                            color: textColor, // Changed from primaryColor
                             fontFamily: 'Poppins',
                           ),
                         ),
@@ -233,7 +318,7 @@ class _HomePageState extends State<HomePage> {
                               "Task Name",
                               style: TextStyle(
                                 fontSize: 16.sp,
-                                color: primaryColor,
+                                color: textColor,
                                 fontFamily: 'Poppins',
                               ),
                             ),
@@ -250,7 +335,8 @@ class _HomePageState extends State<HomePage> {
                                   borderRadius: BorderRadius.circular(10),
                                   borderSide: BorderSide(color: primaryColor),
                                 ),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 15.w, vertical: 15.h),
                               ),
                             ),
                             SizedBox(height: 15.h),
@@ -258,7 +344,7 @@ class _HomePageState extends State<HomePage> {
                               "Description",
                               style: TextStyle(
                                 fontSize: 16.sp,
-                                color: primaryColor,
+                                color: textColor,
                                 fontFamily: 'Poppins',
                               ),
                             ),
@@ -275,50 +361,12 @@ class _HomePageState extends State<HomePage> {
                                   borderRadius: BorderRadius.circular(10.r),
                                   borderSide: BorderSide(color: primaryColor),
                                 ),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 15.w, vertical: 15.h),
                                 hintText: "Add Details About Your Task",
                                 hintStyle: TextStyle(color: Colors.grey),
                               ),
                               maxLines: 3,
-                            ),
-                            SizedBox(height: 15.h),
-                            Text(
-                              "Related Goal",
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: primaryColor,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                            SizedBox(height: 5.h),
-                            Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(10.r),
-                              ),
-                              child: DropdownButton<String>(
-                                borderRadius: BorderRadius.circular(10.r),
-                                isExpanded: true,
-                                value: _selectedGoal,
-                                hint: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 15.w),
-                                  child: Text("Select a Goal", style: TextStyle(color: Colors.grey)),
-                                ),
-                                items: goalOptions.map((String goal) {
-                                  return DropdownMenuItem<String>(
-                                    value: goal,
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: 15.w),
-                                      child: Text(goal),
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (String? newValue) {
-                                  setState(() {
-                                    _selectedGoal = newValue!;
-                                  });
-                                },
-                              ),
                             ),
                             SizedBox(height: 15.h),
                             Row(
@@ -328,11 +376,11 @@ class _HomePageState extends State<HomePage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "Date Of Task",
+                                        "Select Date",
                                         style: TextStyle(
                                           fontSize: 12.sp,
                                           fontFamily: 'Poppins',
-                                          color: primaryColor,
+                                          color: textColor,
                                         ),
                                       ),
                                       SizedBox(height: 5.h),
@@ -340,26 +388,49 @@ class _HomePageState extends State<HomePage> {
                                         readOnly: true,
                                         decoration: InputDecoration(
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10.r),
-                                            borderSide: BorderSide(color: Colors.grey),
+                                            borderRadius:
+                                            BorderRadius.circular(10.r),
+                                            borderSide:
+                                            BorderSide(color: primaryColor),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide(color: primaryColor),
+                                            borderRadius:
+                                            BorderRadius.circular(10),
+                                            borderSide:
+                                            BorderSide(color: primaryColor),
                                           ),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 10.w, vertical: 10.h),
                                           hintText: _selectedDate != null
-                                              ? controller.formatDate(_selectedDate!)
+                                              ? calendarController
+                                              .formatDate(_selectedDate!)
                                               : "mm/dd/yy",
-                                          hintStyle: TextStyle(color: primaryColor),
-                                          suffixIcon: Icon(Icons.calendar_today, color: primaryColor, size: 20.sp),
+                                          hintStyle:
+                                          TextStyle(color:primaryColor),
+                                          suffixIcon: Icon(Icons.calendar_today,
+                                              color: primaryColor, size: 20.sp),
                                         ),
                                         onTap: () async {
                                           final pickedDate = await showDatePicker(
                                             context: context,
-                                            initialDate: _selectedDate ?? DateTime.now(),
+                                            initialDate:
+                                            _selectedDate ?? DateTime.now(),
                                             firstDate: DateTime(2000),
                                             lastDate: DateTime(2100),
+                                            builder: (context, child) {
+                                              return Theme(
+                                                data: Theme.of(context).copyWith(
+                                                  colorScheme: ColorScheme.light(
+                                                    primary: primaryColor,
+                                                    onPrimary: Colors.white,
+                                                    surface: Colors.white,
+                                                    onSurface: Colors.black,
+                                                  ),
+                                                  dialogBackgroundColor: Colors.white,
+                                                ),
+                                                child: child!,
+                                              );
+                                            },
                                           );
                                           if (pickedDate != null) {
                                             setState(() {
@@ -377,7 +448,7 @@ class _HomePageState extends State<HomePage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "Time Of Task",
+                                        "Select Time",
                                         style: TextStyle(
                                           fontSize: 12.sp,
                                           fontFamily: 'Poppins',
@@ -389,24 +460,46 @@ class _HomePageState extends State<HomePage> {
                                         readOnly: true,
                                         decoration: InputDecoration(
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10.r),
-                                            borderSide: BorderSide(color: Colors.grey),
+                                            borderRadius:
+                                            BorderRadius.circular(10.r),
+                                            borderSide:
+                                            BorderSide(color: Colors.grey),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide(color: primaryColor),
+                                            borderRadius:
+                                            BorderRadius.circular(10),
+                                            borderSide:
+                                            BorderSide(color: primaryColor),
                                           ),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 10.w, vertical: 10.h),
                                           hintText: _selectedTime != null
                                               ? _selectedTime!.format(context)
                                               : "--:--:--",
-                                          hintStyle: TextStyle(color: primaryColor),
-                                          suffixIcon: Icon(Icons.access_time, color: primaryColor, size: 20.sp),
+                                          hintStyle:
+                                          TextStyle(color: primaryColor),
+                                          suffixIcon: Icon(Icons.access_time,
+                                              color: primaryColor, size: 20.sp),
                                         ),
                                         onTap: () async {
                                           final pickedTime = await showTimePicker(
                                             context: context,
-                                            initialTime: _selectedTime ?? TimeOfDay.now(),
+                                            initialTime:
+                                            _selectedTime ?? TimeOfDay.now(),
+                                            builder: (context, child) {
+                                              return Theme(
+                                                data: Theme.of(context).copyWith(
+                                                  colorScheme: ColorScheme.light(
+                                                    primary: primaryColor,
+                                                    onPrimary: Colors.white,
+                                                    surface: Colors.white,
+                                                    onSurface: Colors.black,
+                                                  ),
+                                                  dialogBackgroundColor: Colors.white,
+                                                ),
+                                                child: child!,
+                                              );
+                                            },
                                           );
                                           if (pickedTime != null) {
                                             setState(() {
@@ -420,76 +513,101 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 15.h),
-                            Text(
-                              "Task Type",
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: primaryColor,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                            SizedBox(height: 5.h),
-                            Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(10.r),
-                              ),
-                              child: DropdownButton<String>(
-                                borderRadius: BorderRadius.circular(10.r),
-                                isExpanded: true,
-                                value: _taskType,
-                                items: ["Any Time", "Scheduled", "Goal"].map((String type) {
-                                  return DropdownMenuItem<String>(
-                                    value: type,
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: 15.w),
-                                      child: Text(type),
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (String? newValue) {
-                                  setState(() {
-                                    _taskType = newValue!;
-                                  });
-                                },
-                              ),
-                            ),
                             SizedBox(height: 20.h),
                             Center(
-                              child: Container(
+                              child: SizedBox(
                                 width: 0.5.sw,
                                 height: 0.05.sh,
                                 child: ElevatedButton(
-                                  onPressed: () {
+                                  onPressed: () async {
                                     if (_taskNameController.text.isEmpty) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text("Task name is required")),
-                                      );
+                                      SnackbarHelper.showErrorSnackbar(
+                                          "Task name is required");
                                       return;
                                     }
-                                    if (_selectedDate == null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text("Task date is required")),
-                                      );
+                                    if ((_selectedDate != null &&
+                                        _selectedTime == null) ||
+                                        (_selectedDate == null &&
+                                            _selectedTime != null)) {
+                                      SnackbarHelper.showErrorSnackbar(
+                                          "Both date and time are required if scheduling");
                                       return;
                                     }
-                                    final date = controller.formatDate(_selectedDate!);
-                                    final time = _taskType == "Any Time"
-                                        ? ""
-                                        : _selectedTime?.format(context) ?? "";
-                                    controller.addTask(
+
+                                    String? scheduleTime;
+                                    bool isScheduled = false;
+                                    if (_selectedDate != null &&
+                                        _selectedTime != null) {
+                                      final dateTime = DateTime(
+                                        _selectedDate!.year,
+                                        _selectedDate!.month,
+                                        _selectedDate!.day,
+                                        _selectedTime!.hour,
+                                        _selectedTime!.minute,
+                                      );
+                                      scheduleTime = DateFormat(
+                                          "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+                                          .format(dateTime.toUtc());
+                                      isScheduled = true;
+                                    }
+
+                                    final response = await Get.find<ApiService>()
+                                        .createTask(
                                       title: _taskNameController.text,
                                       description: _descriptionController.text,
-                                      goal: _selectedGoal,
-                                      date: date,
-                                      time: time,
-                                      type: _taskType,
+                                      scheduleTime: scheduleTime,
                                     );
-                                    Navigator.pop(context);
+
+                                    if (response['success']) {
+                                      final data = response['data'];
+                                      final task = Task(
+                                        id: data['id'].toString(),
+                                        title: data['title'],
+                                        description: data['description'],
+                                        date: isScheduled
+                                            ? calendarController
+                                            .formatDate(_selectedDate!)
+                                            : '',
+                                        time: data['schedule_time'] != null
+                                            ? DateFormat('hh:mm a').format(
+                                            DateTime.parse(
+                                                data['schedule_time'])
+                                                .toLocal())
+                                            : '',
+                                        type: isScheduled ? 'Scheduled' : 'Any Time',
+                                        isCompleted: data['status'] == 'done',
+                                        completionDate:
+                                        data['completed_on'] != null
+                                            ? DateFormat('MM/dd/yyyy').format(
+                                            DateTime.parse(
+                                                data['completed_on'])
+                                                .toLocal())
+                                            : null,
+                                      );
+
+                                      if (!isScheduled) {
+                                        taskController.anyTimeTasks.add(task);
+                                        taskController.anyTimeTasks.refresh();
+                                      } else {
+                                        scheduleController.scheduledTasks
+                                            .add(task);
+                                        calendarController.tasks.add(task);
+                                        calendarController.saveTasks();
+                                        scheduleController
+                                            .syncWithCalendarController();
+                                      }
+
+                                      SnackbarHelper.showSuccessSnackbar(
+                                          "Task added successfully");
+                                      Navigator.pop(context);
+                                    } else {
+                                      SnackbarHelper.showErrorSnackbar(
+                                          response['message'] ??
+                                              "Failed to add task");
+                                    }
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryColor,
+                                    backgroundColor: buttonColor,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10.r),
                                     ),
@@ -497,7 +615,7 @@ class _HomePageState extends State<HomePage> {
                                   child: Text(
                                     "Add Task",
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color: Colors.black,
                                       fontSize: 16.sp,
                                     ),
                                   ),
@@ -518,7 +636,6 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-
   Widget _buildHeader() {
     return Padding(
       padding: EdgeInsets.only(top: 0.01.sh),
@@ -565,7 +682,8 @@ class _HomePageState extends State<HomePage> {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              Icon(Icons.notifications_none_outlined, color: primaryColor, size: 25.sp),
+              Icon(Icons.notifications_none_outlined,
+                  color: primaryColor, size: 25.sp),
               Positioned(
                 right: -1,
                 top: -4,
@@ -598,12 +716,124 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildShimmerTaskCard() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10.h),
+      child: Row(
+        children: [
+          Container(
+            width: 10.w,
+            height: 0.1.sh,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.r),
+                bottomLeft: Radius.circular(12.r),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 0.1.sh,
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(12.r),
+                  bottomRight: Radius.circular(12.r),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 30.w,
+                    height: 30.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 150.w,
+                          height: 18.h,
+                          color: Colors.white,
+                        ),
+                        SizedBox(height: 8.h),
+                        Container(
+                          width: 100.w,
+                          height: 12.h,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAnyTimeTasks() {
-    final controller = Get.find<CalendarController>();
+    final taskController = Get.find<TaskController>();
+    final calendarController = Get.find<CalendarController>();
+    final Logger _logger = Logger();
     return Obx(() {
-      final selectedDate = controller.formatDate(controller.selectedDay.value);
-      final tasks = controller.getTasksForDate(selectedDate).where((task) => task.type == "Any Time").toList();
+      final selectedDate =
+      calendarController.formatDate(calendarController.selectedDay.value);
+      _logger.d('Building Any Time Tasks for date: $selectedDate');
+      final tasks = taskController.getTasksForDate(selectedDate);
+
+      if (taskController.isLoading.value) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TitleWithViewAll(
+              title: "Any Time Tasks",
+              showViewAll: true,
+              viewAllText: "Missed Task",
+            ),
+            SizedBox(height: 10.h),
+            Shimmer.fromColors(
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: Column(
+                children: List.generate(3, (index) => _buildShimmerTaskCard()),
+              ),
+            ),
+          ],
+        );
+      }
+
+      if (taskController.errorMessage.value.isNotEmpty) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TitleWithViewAll(
+              title: "Any Time Tasks",
+              showViewAll: true,
+              viewAllText: "Missed Task",
+            ),
+            SizedBox(height: 10.h),
+            Text(
+              taskController.errorMessage.value,
+              style: TextStyle(
+                  color: Colors.red, fontSize: 14.sp, fontFamily: 'Poppins'),
+            ),
+          ],
+        );
+      }
+
       if (tasks.isEmpty) {
+        _logger.d('No Any Time Tasks for $selectedDate');
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -615,11 +845,13 @@ class _HomePageState extends State<HomePage> {
             SizedBox(height: 10.h),
             Text(
               "No Any Time Tasks",
-              style: TextStyle(color: Colors.white, fontSize: 14.sp, fontFamily: 'Poppins'),
+              style: TextStyle(
+                  color: Colors.white, fontSize: 14.sp, fontFamily: 'Poppins'),
             ),
           ],
         );
       }
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -631,7 +863,7 @@ class _HomePageState extends State<HomePage> {
           SizedBox(height: 10.h),
           ...tasks.map((task) => _buildTaskCard(
             task: task,
-            showOptions: true,
+            showOptions: !task.isCompleted,
           )),
         ],
       );
@@ -642,10 +874,29 @@ class _HomePageState extends State<HomePage> {
     required Task task,
     bool showOptions = false,
   }) {
-    final controller = Get.find<CalendarController>();
+    final taskController = Get.find<TaskController>();
+    final calendarController = Get.find<CalendarController>();
+    final scheduleController = Get.find<ScheduleTaskController>();
+    final Logger _logger = Logger();
+
+    // Don't show the options menu for completed tasks
+    final shouldShowOptions = showOptions && !task.isCompleted;
+
+    _logger.d(
+        'Rendering task card for task ${task.id}: ${task.title}, type=${task.type}, completed=${task.isCompleted}');
     return GestureDetector(
-      onTap: () {
-        controller.toggleTaskCompletion(task.id);
+      onTap: task.isCompleted || (taskController.taskLoading[task.id] ?? false)
+          ? null
+          : () async {
+        _logger.d('Marking task ${task.id} as complete');
+        final response = await taskController.toggleTaskCompletion(task.id);
+        if (response['success']) {
+          _logger.i('Completed task: ${task.title}');
+          _showCompletionDialog(task.title);
+        } else {
+          SnackbarHelper.showErrorSnackbar(
+              response['message'] ?? 'Failed to mark task as complete');
+        }
       },
       child: Row(
         children: [
@@ -655,13 +906,13 @@ class _HomePageState extends State<HomePage> {
             height: 0.1.sh,
             margin: EdgeInsets.only(bottom: 10.h),
             decoration: BoxDecoration(
-              color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
+              color: task.isCompleted ? greenColor : Colors.transparent,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12.r),
                 bottomLeft: Radius.circular(12.r),
               ),
               border: Border.all(
-                color: task.isCompleted ? Color(0xFF088408) : buttonColor,
+                color: task.isCompleted ? greenColor : buttonColor,
                 width: 1,
               ),
             ),
@@ -679,32 +930,48 @@ class _HomePageState extends State<HomePage> {
                   bottomRight: Radius.circular(12.r),
                 ),
                 border: Border.all(
-                  color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
+                  color:
+                  task.isCompleted ? greenColor : Colors.transparent,
                   width: 1,
                 ),
               ),
               child: Row(
                 children: [
-                  AnimatedContainer(
-                    duration: Duration(milliseconds: 300),
-                    width: 30.w,
-                    height: 30.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
-                      border: Border.all(
-                        color: task.isCompleted ? Colors.transparent : Colors.white,
-                        width: 2,
+                  Obx(() {
+                    final isTaskLoading =
+                        taskController.taskLoading[task.id] ?? false;
+                    return AnimatedContainer(
+                      duration: Duration(milliseconds: 300),
+                      width: 30.w,
+                      height: 30.w,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: task.isCompleted
+                            ? greenColor
+                            : Colors.transparent,
+                        border: Border.all(
+                          color: task.isCompleted || isTaskLoading
+                              ? Colors.transparent
+                              : Colors.white,
+                          width: 2,
+                        ),
                       ),
-                    ),
-                    child: Center(
-                      child: AnimatedOpacity(
-                        duration: Duration(milliseconds: 200),
-                        opacity: task.isCompleted ? 1.0 : 0.0,
-                        child: Icon(Icons.check, color: Colors.white, size: 16.sp),
+                      child: Center(
+                        child: isTaskLoading
+                            ? CircularProgressIndicator(
+                          valueColor:
+                          AlwaysStoppedAnimation<Color>(Colors.white),
+                          strokeWidth: 2,
+                        )
+                            : AnimatedOpacity(
+                          duration: Duration(milliseconds: 200),
+                          opacity: task.isCompleted ? 1.0 : 0.0,
+                          child: Icon(Icons.check,
+                              color: Colors.white, size: 16.sp),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                   SizedBox(width: 12.w),
                   Expanded(
                     child: Column(
@@ -719,54 +986,135 @@ class _HomePageState extends State<HomePage> {
                             style: TextStyle(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w700,
-                              color: task.isCompleted ? Color(0xFF088408) : Color(0xff1C2A45),
+                              color: task.isCompleted
+                                  ? greenColor
+                                  : Color(0xff1C2A45),
                               fontFamily: 'Philosopher',
                             ),
                           ),
                         ),
                         Text(
-                          task.goal,
+                          task.description,
                           style: TextStyle(
-                            fontSize: 12.sp,
-                            color: task.isCompleted ? Color(0xFFAAAAAA) : Colors.white,
+                            fontSize: 10.sp,
+                            color: task.isCompleted
+                                ? Color(0xFFAAAAAA)
+                                : Colors.white,
                             fontFamily: 'Poppins',
                           ),
                         ),
                       ],
                     ),
                   ),
-                  if (showOptions)
+                  if (shouldShowOptions)
                     PopupMenuButton<String>(
                       icon: Icon(Icons.more_vert, color: Colors.white, size: 24.sp),
                       onSelected: (value) async {
                         if (value == 'schedule') {
+                          _logger.d('Scheduling task ${task.id}');
                           final pickedDate = await showDatePicker(
                             context: context,
                             initialDate: DateTime.now(),
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: ColorScheme.light(
+                                    primary: primaryColor,
+                                    onPrimary: Colors.white,
+                                    surface: Colors.white,
+                                    onSurface: Colors.black,
+                                  ),
+                                  dialogBackgroundColor: Colors.white,
+                                ),
+                                child: child!,
+                              );
+                            },
                           );
                           if (pickedDate != null) {
                             final pickedTime = await showTimePicker(
                               context: context,
                               initialTime: TimeOfDay.now(),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: ColorScheme.light(
+                                      primary: primaryColor,
+                                      onPrimary: Colors.white,
+                                      surface: Colors.white,
+                                      onSurface: Colors.black,
+                                    ),
+                                    dialogBackgroundColor: Colors.white,
+                                  ),
+                                  child: child!,
+                                );
+                              },
                             );
                             if (pickedTime != null) {
-                              controller.scheduleTask(
-                                task.id,
-                                controller.formatDate(pickedDate),
-                                pickedTime.format(context),
+                              final localDateTime = DateTime(
+                                pickedDate.year,
+                                pickedDate.month,
+                                pickedDate.day,
+                                pickedTime.hour,
+                                pickedTime.minute,
                               );
+                              final utcDateTime = localDateTime.toUtc();
+                              final scheduleTime = DateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(utcDateTime);
+
+                              final response = await Get.find<ApiService>().rescheduleTask(
+                                taskId: task.id,
+                                scheduleTime: scheduleTime,
+                              );
+
+                              if (response['success']) {
+                                final data = response['data'];
+                                final updatedTask = Task(
+                                  id: data['id'].toString(),
+                                  title: data['title'],
+                                  description: data['description'],
+                                  date: Get.find<CalendarController>().formatDate(pickedDate),
+                                  time: pickedTime.format(context),
+                                  type: 'Scheduled',
+                                  isCompleted: data['status'] == 'done',
+                                  completionDate: data['completed_on'] != null
+                                      ? DateFormat('MM/dd/yyyy').format(DateTime.parse(data['completed_on']).toLocal())
+                                      : null,
+                                );
+
+                                // Remove from any time tasks
+                                Get.find<TaskController>().anyTimeTasks.removeWhere((t) => t.id == task.id);
+
+                                // Add to scheduled tasks
+                                Get.find<ScheduleTaskController>().scheduledTasks.add(updatedTask);
+                                Get.find<CalendarController>().tasks.add(updatedTask);
+                                Get.find<CalendarController>().saveTasks();
+                                Get.find<ScheduleTaskController>().syncWithCalendarController();
+
+                                // Refresh the lists
+                                Get.find<TaskController>().anyTimeTasks.refresh();
+                                Get.find<ScheduleTaskController>().scheduledTasks.refresh();
+
+                                SnackbarHelper.showSuccessSnackbar('Task scheduled successfully');
+                              } else {
+                                SnackbarHelper.showErrorSnackbar(response['message'] ?? 'Failed to schedule task');
+                              }
                             }
                           }
                         } else if (value == 'cancel') {
-                          controller.cancelTask(task.id);
+                          _logger.d('Canceling task ${task.id}');
+                          final response = await Get.find<TaskController>().cancelTask(task.id);
+                          if (response['success']) {
+                            SnackbarHelper.showSuccessSnackbar('Task canceled successfully');
+                          } else {
+                            SnackbarHelper.showErrorSnackbar(response['message'] ?? 'Failed to cancel task');
+                          }
                         }
                       },
                       itemBuilder: (BuildContext context) => [
                         PopupMenuItem(
                           value: 'schedule',
-                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                           height: 40.h,
                           child: Row(
                             children: [
@@ -785,7 +1133,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         PopupMenuItem(
                           value: 'cancel',
-                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                           height: 40.h,
                           child: Row(
                             children: [
@@ -812,45 +1160,78 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-          ),
+          )
         ],
       ),
     );
   }
 
   Widget _buildTodaySchedule() {
-    final controller = Get.find<CalendarController>();
+    final scheduleController = Get.find<ScheduleTaskController>();
+    final calendarController = Get.find<CalendarController>();
+    final Logger _logger = Logger();
     return Obx(() {
-      final selectedDate = controller.formatDate(controller.selectedDay.value);
-      final tasks = controller.getTasksForDate(selectedDate).where((task) => task.type == "Scheduled").toList();
-      if (tasks.isEmpty) {
+      final selectedDate =
+          calendarController.formatDate(calendarController.selectedDay.value);
+      _logger.d('Building Today Schedule for date: $selectedDate');
+      final tasks = scheduleController.getTasksForDate(selectedDate);
+
+      if (scheduleController.isLoading.value) {
+        _logger.d('Schedule is loading');
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TitleWithViewAll(
-              title: "${isSameDay(controller.selectedDay.value, DateTime.now()) ? 'Today\'s' : controller.formatDate(controller.selectedDay.value)} Schedule",
+              title:
+                  "${isSameDay(calendarController.selectedDay.value, DateTime.now()) ? 'Today\'s' : calendarController.formatDate(calendarController.selectedDay.value)} Schedule",
+              showViewAll: false,
+            ),
+            SizedBox(height: 10.h),
+            Shimmer.fromColors(
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: Column(
+                children: List.generate(3, (index) => _buildShimmerTaskCard()),
+              ),
+            ),
+          ],
+        );
+      }
+
+      if (tasks.isEmpty) {
+        _logger.d('No tasks for $selectedDate');
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TitleWithViewAll(
+              title:
+                  "${isSameDay(calendarController.selectedDay.value, DateTime.now()) ? 'Today\'s' : calendarController.formatDate(calendarController.selectedDay.value)} Schedule",
               showViewAll: false,
             ),
             SizedBox(height: 10.h),
             Text(
               "No Scheduled Tasks",
-              style: TextStyle(color: Colors.white, fontSize: 14.sp, fontFamily: 'Poppins'),
+              style: TextStyle(
+                  color: Colors.white, fontSize: 14.sp, fontFamily: 'Poppins'),
             ),
           ],
         );
       }
+
+      _logger.d('Rendering ${tasks.length} tasks for $selectedDate');
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TitleWithViewAll(
-            title: "${isSameDay(controller.selectedDay.value, DateTime.now()) ? 'Today\'s' : controller.formatDate(controller.selectedDay.value)} Schedule",
+            title:
+                "${isSameDay(calendarController.selectedDay.value, DateTime.now()) ? 'Today\'s' : calendarController.formatDate(calendarController.selectedDay.value)} Schedule",
             showViewAll: false,
           ),
           SizedBox(height: 10.h),
           ...tasks.map((task) => _buildScheduleCard(
-            task: task,
-            showOptions: true,
-          )),
+                task: task,
+                showOptions: !task.isCompleted,
+              )),
         ],
       );
     });
@@ -860,10 +1241,22 @@ class _HomePageState extends State<HomePage> {
     required Task task,
     bool showOptions = false,
   }) {
-    final controller = Get.find<CalendarController>();
+    final scheduleController = Get.find<ScheduleTaskController>();
+    final Logger _logger = Logger();
+    _logger.d(
+        'Rendering schedule card for goal ${task.id}: ${task.title}, date=${task.date}, time=${task.time}');
     return GestureDetector(
-      onTap: () {
-        controller.toggleTaskCompletion(task.id);
+      onTap: () async{
+        final response = await scheduleController.markTaskComplete(task.id);
+        if (response['success']) {
+          _showCompletionDialog(task.title);
+        } else {
+          SnackbarHelper.showErrorSnackbar(
+              response['message'] ?? 'Failed to mark task as complete');
+        }
+        _logger.d('Marking goal ${task.id} as complete');
+        scheduleController.markTaskComplete(task.id);
+
       },
       child: Row(
         children: [
@@ -884,13 +1277,13 @@ class _HomePageState extends State<HomePage> {
             height: 0.09.sh,
             margin: EdgeInsets.only(bottom: 10.h),
             decoration: BoxDecoration(
-              color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
+              color: task.isCompleted ? greenColor: Colors.transparent,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12.r),
                 bottomLeft: Radius.circular(12.r),
               ),
               border: Border.all(
-                color: task.isCompleted ? Color(0xFF088408) : buttonColor,
+                color: task.isCompleted ? greenColor: buttonColor,
                 width: 1,
               ),
             ),
@@ -908,7 +1301,8 @@ class _HomePageState extends State<HomePage> {
                   bottomRight: Radius.circular(12.r),
                 ),
                 border: Border.all(
-                  color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
+                  color:
+                      task.isCompleted ? greenColor: Colors.transparent,
                   width: 1,
                 ),
               ),
@@ -920,9 +1314,13 @@ class _HomePageState extends State<HomePage> {
                     height: 24.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: task.isCompleted ? Color(0xFF088408) : Colors.transparent,
+                      color: task.isCompleted
+                          ? greenColor
+                          : Colors.transparent,
                       border: Border.all(
-                        color: task.isCompleted ? Colors.transparent : Colors.white,
+                        color: task.isCompleted
+                            ? Colors.transparent
+                            : Colors.white,
                         width: 2,
                       ),
                     ),
@@ -930,7 +1328,8 @@ class _HomePageState extends State<HomePage> {
                       child: AnimatedOpacity(
                         duration: Duration(milliseconds: 200),
                         opacity: task.isCompleted ? 1.0 : 0.0,
-                        child: Icon(Icons.check, color: Colors.white, size: 16.sp),
+                        child:
+                            Icon(Icons.check, color: Colors.white, size: 16.sp),
                       ),
                     ),
                   ),
@@ -948,16 +1347,22 @@ class _HomePageState extends State<HomePage> {
                             style: TextStyle(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w700,
-                              color: task.isCompleted ? Color(0xFF088408) : Color(0xff1C2A45),
+                              color: task.isCompleted
+                                  ? greenColor
+                                  : Color(0xff1C2A45),
                               fontFamily: 'Philosopher',
                             ),
                           ),
                         ),
                         Text(
-                          task.goal,
+                          task.description,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12.sp,
-                            color: task.isCompleted ? Color(0xFFAAAAAA) : Colors.white,
+                            color: task.isCompleted
+                                ? Color(0xFFAAAAAA)
+                                : Colors.white,
                             fontFamily: 'Poppins',
                           ),
                         ),
@@ -967,9 +1372,15 @@ class _HomePageState extends State<HomePage> {
                   if (showOptions)
                     PopupMenuButton<String>(
                       icon: Icon(Icons.more_vert, color: Colors.white, size: 24.sp),
-                      onSelected: (value) {
+                      onSelected: (value) async {
                         if (value == 'cancel') {
-                          controller.cancelTask(task.id);
+                          _logger.d('Canceling task ${task.id}');
+                          final response = await Get.find<ScheduleTaskController>().cancelTask(task.id);
+                          if (response['success']) {
+                            SnackbarHelper.showSuccessSnackbar('Task canceled successfully');
+                          } else {
+                            SnackbarHelper.showErrorSnackbar(response['message'] ?? 'Failed to cancel task');
+                          }
                         }
                       },
                       itemBuilder: (BuildContext context) => [

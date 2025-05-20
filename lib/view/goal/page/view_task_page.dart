@@ -240,7 +240,7 @@ class _TaskCardState extends State<TaskCard> with SingleTickerProviderStateMixin
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
 
-    // Start with animation completed if task is completed
+    // Start with animation completed if goal is completed
     if (widget.isCompleted) {
       _controller.value = 1.0;
     }

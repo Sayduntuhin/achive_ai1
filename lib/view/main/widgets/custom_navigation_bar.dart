@@ -36,7 +36,7 @@ class CustomBottomNavBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildNavItem(controller, index: 0, icon: Icons.home_outlined, label: "Home"),
-              _buildNavItem(controller, index: 1, svgPath: "assets/svg/task.svg", label: "Goals"),
+              _buildNavItem(controller, index: 1, svgPath: "assets/svg/goal.svg", label: "Goals"),
               _buildNavItem(controller, index: 2, svgPath: "assets/svg/ai.svg", label: "AI"),
               _buildNavItem(controller, index: 3, svgPath: "assets/svg/setting.svg", label: "Settings"),
             ],
