@@ -3,10 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// Typing Indicator Widget
 class TypingIndicator extends StatefulWidget {
-  const TypingIndicator({Key? key}) : super(key: key);
+  const TypingIndicator({super.key});
 
   @override
-  __TypingIndicatorState createState() => __TypingIndicatorState();
+  State<TypingIndicator>  createState() => __TypingIndicatorState();
 }
 
 class __TypingIndicatorState extends State<TypingIndicator> with TickerProviderStateMixin {

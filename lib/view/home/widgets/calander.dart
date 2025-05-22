@@ -124,7 +124,7 @@ class CalendarWidget extends StatelessWidget {
                       ],
                     ),
                     markerDecoration: BoxDecoration(
-                      color: Colors.white,
+                      color: flortingButtonColor,
                       shape: BoxShape.circle,
                     ),
                     markersMaxCount: 3,

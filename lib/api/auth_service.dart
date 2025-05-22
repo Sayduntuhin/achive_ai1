@@ -104,6 +104,50 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>> socialSignIn({
+    required String name,
+    required String email,
+    required String timeZone,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/accounts/social_signup_signin'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name' : name,
+          'email': email,
+          'time_zone_info': timeZone,
+        }),
+      );
+
+      _logger.i('Social sign-in API response: ${response.statusCode} ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'tokens': {
+            'access': data['access'],
+            'refresh': data['refresh'],
+          },
+        };
+      } else {
+        final data = jsonDecode(response.body);
+        _logger.w('Social sign-in failed: ${response.body}');
+        return {
+          'success': false,
+          'message': data['detail'] ?? 'Social sign-in failed',
+        };
+      }
+    } catch (e) {
+      _logger.e('Error during social sign-in API call: $e');
+      return {
+        'success': false,
+        'message': 'An unexpected error occurred during social sign-in',
+      };
+    }
+  }
+
   // Logout
   Future<bool> logout() async {
     final refreshToken = await getRefreshToken();

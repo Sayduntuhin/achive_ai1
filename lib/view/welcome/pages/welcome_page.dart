@@ -2,33 +2,76 @@ import 'package:achive_ai/themes/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
-
-import '../../widgets/custom_button.dart';
+import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:logger/logger.dart';
+import '../../../api/auth_service.dart';
+import '../../widgets/snackbar_helper.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
+  Future<void> _handleGoogleSignIn(BuildContext context) async {
+    final Logger _logger = Logger();
+    final AuthService authService = AuthService();
+    final GoogleSignIn googleSignIn = GoogleSignIn(scopes: ['email']);
+
+    try {
+      // Sign out previous user to ensure fresh login
+      await googleSignIn.signOut();
+      _logger.d('Initiating Google Sign-In');
+
+      // Start Google Sign-In
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        _logger.w('Google Sign-In canceled by user');
+        SnackbarHelper.showErrorSnackbar('Google Sign-In canceled');
+        return;
+      }
+      final name = googleUser.displayName ?? 'No Name';
+      final email = googleUser.email;
+      _logger.d('Google Sign-In successful, email: $email');
+
+      // Call social sign-in API
+      final response = await authService.socialSignIn(
+        name: name,
+        email: email,
+        timeZone: 'Asia/Dhaka',
+      );
+
+      if (response['success']) {
+        _logger.i('Social sign-in successful, navigating to HomePage');
+        await authService.storeTokens(
+          access: response['tokens']['access'],
+          refresh: response['tokens']['refresh'],
+        );
+        Get.offNamed('/mainPage'); // Navigate to HomePage
+      } else {
+        _logger.w('Social sign-in failed: ${response['message']}');
+        SnackbarHelper.showErrorSnackbar(response['message'] ?? 'Social sign-in failed');
+      }
+    } catch (e) {
+      _logger.e('Error during Google Sign-In: $e');
+      SnackbarHelper.showErrorSnackbar('An unexpected error occurred during Google Sign-In');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor, // Background color
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 30.w, vertical: 40.h),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              /// *** App Logo ***
               SvgPicture.asset(
-                'assets/svg/logo.svg', // Replace with your logo
+                'assets/svg/logo.svg',
                 width: 0.12.sw,
                 height: 0.12.sh,
               ),
-
               SizedBox(height: 20.h),
-              /// *** Title ***
               Text(
                 "Welcome To\nMyPerfectLife Ai",
                 textAlign: TextAlign.center,
@@ -36,26 +79,22 @@ class WelcomeScreen extends StatelessWidget {
                   fontFamily: "Philosopher",
                   fontSize: 40.sp,
                   fontWeight: FontWeight.bold,
-                  color: titleColor, // Orange text color
+                  color: titleColor,
                 ),
               ),
-
               SizedBox(height: 40.h),
-
-              /// *** Log In Button ***
-
               SizedBox(
                 width: double.infinity,
                 height: 60.h,
                 child: ElevatedButton(
                   onPressed: () {
-                   Get.toNamed('/logIn');
+                    Get.toNamed('/logIn');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: buttonInnerColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20.r),
-                      side: BorderSide(color: buttonColor)
+                      side: BorderSide(color: buttonColor),
                     ),
                   ),
                   child: Text(
@@ -69,22 +108,32 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
               SizedBox(height: 15.h),
-
-              /// *** Sign Up Button ***
-              CustomButton(
-                text: "Sign up",
-                backgroundColor: buttonColor, // Pass any color
-                onPressed: () {
-                  Get.toNamed('/signUp');
-                },
+              SizedBox(
+                width: double.infinity,
+                height: 60.h,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.toNamed('/signUp');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: buttonColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                  ),
+                  child: Text(
+                    "Sign up",
+                    style: TextStyle(
+                      fontFamily: "Philosopher",
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                ),
               ),
-
-
               SizedBox(height: 30.h),
-
-              /// *** Divider with Text ***
               Row(
                 children: [
                   Expanded(
@@ -112,17 +161,12 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
               SizedBox(height: 15.h),
-
-              /// *** Google Button ***
               GestureDetector(
-                onTap: () {
-                  // TODO: Handle Google Login
-                },
+                onTap: () => _handleGoogleSignIn(context),
                 child: Center(
                   child: Image.asset(
-                    'assets/images/buttons.png', // Replace with Google icon
+                    'assets/images/buttons.png',
                     width: 60.w,
                     height: 60.h,
                   ),

@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleTypeRole</key>
+    <string>Editor</string>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>com.googleusercontent.apps.1019470129401-6inhlvu8fkdir7cvl97et3028lrojj20</string>
+    </array>
+  </dict>
+</array>
+<key>GIDClientID</key>
+<string>1019470129401-ddlpcs2dptmcoivmuqn0eet9nhci7m8k.apps.googleusercontent.com</string>
 <dict>
     <key>NSCameraUsageDescription</key>
     <string>Allow access to camera to take profile photos</string>

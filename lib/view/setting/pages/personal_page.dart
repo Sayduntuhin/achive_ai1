@@ -1,132 +1,23 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
+import '../../../controller/profile_controller.dart';
 import '../../../themes/colors.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_text_field.dart';
 
-class PersonalInformationScreen extends StatefulWidget {
+class PersonalInformationScreen extends StatelessWidget {
   const PersonalInformationScreen({super.key});
 
   @override
-  State<PersonalInformationScreen> createState() =>
-      _PersonalInformationScreenState();
-}
-
-class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
-  final TextEditingController nameController = TextEditingController(text: "Mira");
-  final TextEditingController emailController = TextEditingController(text: "abc@gmail.com");
-  final TextEditingController passwordController = TextEditingController(text: "********");
-  final TextEditingController birthdayController = TextEditingController(text: "DD/MM/YY");
-
-  bool _isNameEditable = false;
-  bool _isPasswordVisible = false;
-  File? _selectedImage; // Store selected image
-
-  // Image picker instance
-  final ImagePicker _picker = ImagePicker();
-
-  // Show bottom sheet for camera/gallery selection
-  void _showImageSourceBottomSheet() {
-    showModalBottomSheet(
-      backgroundColor: backgroundColor,
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-
-          padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Select Image Source',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: secondaryTextColor,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              ListTile(
-                leading: Icon(Icons.camera_alt, size: 24.sp, color: buttonColor),
-                title: Text(
-                  'Camera',
-                  style: TextStyle(fontSize: 16.sp, color: secondaryTextColor),
-                ),
-                onTap: () {
-                  Get.back();
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.photo_library, size: 24.sp, color: buttonColor),
-                title: Text(
-                  'Gallery',
-                  style: TextStyle(fontSize: 16.sp, color: secondaryTextColor),
-                ),
-                onTap: () {
-                  Get.back();
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-              SizedBox(height: 10.h),
-              TextButton(
-                onPressed: () => Get.back(),
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(fontSize: 16.sp, color: Colors.red),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      if (source == ImageSource.camera) {
-        var cameraStatus = await Permission.camera.request();
-        if (!cameraStatus.isGranted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Camera permission denied')),
-          );
-          return;
-        }
-      } else if (source == ImageSource.gallery) {
-        var storageStatus = await Permission.storage.request();
-        var photoStatus = await Permission.photos.request();
-        if (!storageStatus.isGranted && !photoStatus.isGranted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Storage/Photos permission denied')),
-          );
-          return;
-        }
-      }
-
-      final XFile? image = await _picker.pickImage(source: source);
-      if (image != null) {
-        setState(() {
-          _selectedImage = File(image.path);
-        });
-      }
-    } catch (e) {
-      debugPrint('Image picker error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // Use a tagged controller to ensure a single instance
+    final ProfileController controller = Get.put(ProfileController(), tag: 'personalInfo');
+    // Trigger fetchProfile on navigation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.fetchProfile();
+    });
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: PreferredSize(
@@ -141,123 +32,152 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
           },
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: 20.h),
-              // Profile Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      CircleAvatar(
-                        radius: 45.w,
-                        backgroundImage: _selectedImage != null
-                            ? FileImage(_selectedImage!)
-                            : AssetImage("assets/images/person.png") as ImageProvider,
-                      ),
-                      Positioned(
-                        bottom: -10.h,
-                        right: -5.w,
-                        child: IconButton(
-                          icon: Icon(Icons.camera_alt_outlined, size: 18.sp, color: primaryColor),
-                          onPressed: _showImageSourceBottomSheet,
-                          padding: EdgeInsets.all(4.w),
-                          constraints: BoxConstraints(),
+      body: Obx(
+            () => controller.isLoading.value
+            ? Center(child: CircularProgressIndicator(color: primaryColor))
+            : SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 20.h),
+                // Profile Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Avatar with camera icon
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        CircleAvatar(
+                          radius: 45.w,
+                          backgroundImage: controller.selectedImage.value != null
+                              ? FileImage(controller.selectedImage.value!)
+                              : controller.profile.value.profileImage != null
+                              ? NetworkImage(controller.profile.value.profileImage!)
+                              : const AssetImage("assets/images/empty_person.png") as ImageProvider,
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(width: 0.02.sw),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Mira",
-                        style: TextStyle(
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                        Positioned(
+                          bottom: -10.h,
+                          right: -5.w,
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.camera_alt_outlined,
+                              size: 18.sp,
+                              color: primaryColor,
+                            ),
+                            onPressed: () => controller.showImageSourceBottomSheet(context),
+                            padding: EdgeInsets.all(4.w),
+                            constraints: const BoxConstraints(),
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 0.01.sh),
-                      Row(
+                      ],
+                    ),
+                    SizedBox(width: 15.w),
+                    // User info with constrained width
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Bio:",
-                            style: TextStyle(fontSize: 14.sp, color: Colors.black54),
-                          ),
-                          SizedBox(width: 5.w),
-                          Container(
-                            width: 0.5.sw,
-                            height: 0.03.sh,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: borderColor),
-                              borderRadius: BorderRadius.circular(15.r),
+                            controller.profile.value.fullName?.isEmpty ?? true
+                                ? "User"
+                                : controller.profile.value.fullName!,
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 8.h),
+                          CustomTextFieldForSetting(
+                            label: "Bio",
+                            hintText: "Tell us about yourself",
+                            controller: controller.bioController,
+                            isEditable: controller.isBioEditable.value,
+                            suffixIconPath: "assets/svg/edit.svg",
+                            onSuffixTap: controller.toggleBioEditable,
                           ),
                         ],
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20.h),
+                // Text Fields
+                CustomTextFieldForSetting(
+                  label: "Name",
+                  hintText: "Enter your name",
+                  controller: controller.nameController,
+                  suffixIconPath: "assets/svg/edit.svg",
+                  isEditable: controller.isNameEditable.value,
+                  onSuffixTap: controller.toggleNameEditable,
+                ),
+                SizedBox(height: 10.h),
+                CustomTextFieldForSetting(
+                  label: "Email",
+                  hintText: "Enter your email",
+                  controller: controller.emailController,
+                  isEditable: false,
+                ),
+                SizedBox(height: 10.h),
+                CustomTextFieldForSetting(
+                  label: "Password",
+                  hintText: "********",
+                  controller: controller.passwordController,
+                  isPassword: true,
+                  isEditable: true,
+                  suffixIconPath: "assets/svg/edit.svg",
+                  onSuffixTap: controller.togglePasswordVisibility,
+                ),
+                SizedBox(height: 10.h),
+                CustomTextFieldForSetting(
+                  label: "Birthday",
+                  hintText: "DD/MM/YY",
+                  controller: controller.birthdayController,
+                  isReadOnly: true,
+                  suffixIconPath: "assets/svg/edit.svg",
+                  onSuffixTap: () => controller.pickDate(context),
+                ),
+                SizedBox(height: 20.h),
+                // Save Button
+                SizedBox(
+                  width: 0.5.sw,
+                  height: 45.h,
+                  child: ElevatedButton(
+                    onPressed: controller.isLoading.value ? null : controller.updateProfile,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                    ),
+                    child: controller.isLoading.value
+                        ? SizedBox(
+                      width: 20.w,
+                      height: 20.h,
+                      child: const CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : Text(
+                      "Save Changes",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
                   ),
-                ],
-              ),
-              SizedBox(height: 0.02.sh),
-
-              // Reusable Text Fields
-              CustomTextFieldForSetting(
-                label: "Name",
-                hintText: "Mira",
-                controller: nameController,
-                suffixIconPath: "assets/svg/edit.svg",
-                isEditable: _isNameEditable,
-                onSuffixTap: () {
-                  setState(() {
-                    _isNameEditable = !_isNameEditable;
-                  });
-                },
-              ),
-              SizedBox(height: 0.01.sh),
-
-              CustomTextFieldForSetting(
-                label: "Email",
-                hintText: "abc@gmail.com",
-                controller: emailController,
-                isEditable: false,
-              ),
-              SizedBox(height: 0.01.sh),
-
-              CustomTextFieldForSetting(
-                label: "Password",
-                hintText: "********",
-                controller: passwordController,
-                isPassword: true,
-                isEditable: true,
-                suffixIconPath: "assets/svg/edit.svg",
-                onSuffixTap: () {
-                  setState(() {
-                    _isPasswordVisible = !_isPasswordVisible;
-                  });
-                },
-              ),
-              SizedBox(height: 0.01.sh),
-
-              CustomTextFieldForSetting(
-                label: "Birthday",
-                hintText: "DD/MM/YY",
-                controller: birthdayController,
-                isReadOnly: true,
-                suffixIconPath: "assets/svg/edit.svg",
-                onSuffixTap: () {
-                  // Implement Date Picker functionality
-                },
-              ),
-            ],
+                ),
+                SizedBox(height: 20.h),
+              ],
+            ),
           ),
         ),
       ),

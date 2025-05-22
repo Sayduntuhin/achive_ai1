@@ -11,7 +11,7 @@ class ScheduleTaskController extends GetxController {
   var scheduledTasks = <Task>[].obs;
   var isLoading = true.obs;
   var errorMessage = ''.obs;
-  var taskLoading = <String, bool>{}.obs; // Added taskLoading
+  var taskLoading = <String, bool>{}.obs;
   final ApiService apiService = Get.find<ApiService>();
   final CalendarController calendarController = Get.find<CalendarController>();
 
@@ -29,26 +29,37 @@ class ScheduleTaskController extends GetxController {
     try {
       isLoading.value = true;
       errorMessage.value = '';
+      scheduledTasks.clear();
 
-      final response = await apiService.getScheduledTasks();
-      _logger.d('Fetch Scheduled Tasks response: ${response.toString()}');
+      // Fetch regular scheduled tasks
+      final taskResponse = await apiService.getScheduledTasks();
+      _logger.d('Fetch Scheduled Tasks response: $taskResponse');
 
-      if (response['success']) {
-        final List<dynamic> data = response['data'];
-        scheduledTasks.clear();
-        scheduledTasks.addAll(data.map((taskJson) {
-          final scheduleTime = taskJson['schedule_time'];
+      // Fetch goal subtasks
+      final subtaskResponse = await apiService.getGoalSubtasks();
+      _logger.d('Fetch Goal Subtasks response: $subtaskResponse');
+
+      // Process regular tasks
+      if (taskResponse['success']) {
+        final List<dynamic> taskData = taskResponse['data'];
+        scheduledTasks.addAll(taskData.map((taskJson) {
           String date = '';
           String time = '';
           String type = 'Any Time';
+          final scheduleTime = taskJson['schedule_time'];
           if (scheduleTime != null) {
-            final dateTime = DateTime.parse(scheduleTime).toLocal();
-            date = DateFormat('MM/dd/yyyy').format(dateTime);
-            time = DateFormat('hh:mm a').format(dateTime);
-            type = 'Scheduled';
-            _logger.d('Parsed task ${taskJson['id']}: date=$date, time=$time, type=$type');
-          } else {
-            _logger.d('Parsed task ${taskJson['id']}: Any Time task');
+            try {
+              final dateTime = DateTime.parse(scheduleTime).toLocal();
+              date = DateFormat('MM/dd/yyyy').format(dateTime);
+              time = DateFormat('hh:mm a').format(dateTime);
+              type = 'Scheduled';
+              _logger.d('Parsed task ${taskJson['id']}: date=$date, time=$time, type=$type');
+            } catch (e) {
+              _logger.e('Failed to parse schedule_time for task ${taskJson['id']}: $scheduleTime, error: $e');
+              date = '';
+              time = '';
+              type = 'Any Time';
+            }
           }
           return Task(
             id: taskJson['id'].toString(),
@@ -59,23 +70,73 @@ class ScheduleTaskController extends GetxController {
             type: type,
             isCompleted: taskJson['status'] == 'done',
             completionDate: taskJson['completed_on'] != null
-                ? DateFormat('MM/dd/yyyy')
-                .format(DateTime.parse(taskJson['completed_on']).toLocal())
+                ? DateFormat('MM/dd/yyyy').format(DateTime.parse(taskJson['completed_on']).toLocal())
                 : null,
+            isGoalSubtask: false,
           );
         }).toList());
-
-        scheduledTasks.forEach((task) {
-          _logger.d(
-              'Task ${task.id}: date=${task.date}, type=${task.type}, completed=${task.isCompleted}, completionDate=${task.completionDate}');
-        });
-
-        syncWithCalendarController();
       } else {
-        errorMessage.value = response['message'] ?? 'Failed to fetch scheduled tasks';
+        errorMessage.value = taskResponse['message'] ?? 'Failed to fetch scheduled tasks';
         _logger.w('Error fetching scheduled tasks: ${errorMessage.value}');
+      }
+
+      // Process goal subtasks
+      if (subtaskResponse['success']) {
+        final List<dynamic> subtaskData = subtaskResponse['data'];
+        scheduledTasks.addAll(subtaskData.map((subtaskJson) {
+          String date = '';
+          String time = '';
+          final eventDate = subtaskJson['event_occuring_date'];
+          final eventTime = subtaskJson['event_occuring_time'];
+          if (eventDate != null) {
+            try {
+              // Assume eventDate is in ISO 8601 format (e.g., 2025-05-22T17:00:00Z)
+              final dateTime = DateTime.parse(eventDate).toLocal();
+              date = DateFormat('MM/dd/yyyy').format(dateTime);
+              time = DateFormat('hh:mm a').format(dateTime);
+              _logger.d('Parsed subtask ${subtaskJson['id']}: date=$date, time=$time');
+            } catch (e) {
+              _logger.e('Failed to parse event_occuring_date for subtask ${subtaskJson['id']}: $eventDate, error: $e');
+              // Fallback: Try combining eventDate and eventTime if eventDate isn't ISO 8601
+              if (eventTime != null) {
+                try {
+                  final dateTime = DateTime.parse('$eventDate $eventTime').toLocal();
+                  date = DateFormat('MM/dd/yyyy').format(dateTime);
+                  time = DateFormat('hh:mm a').format(dateTime);
+                  _logger.d('Fallback parsed subtask ${subtaskJson['id']}: date=$date, time=$time');
+                } catch (e) {
+                  _logger.e('Fallback parse failed for subtask ${subtaskJson['id']}: $eventDate $eventTime, error: $e');
+                  date = '';
+                  time = '';
+                }
+              }
+            }
+          }
+          return Task(
+            id: subtaskJson['id'].toString(),
+            title: subtaskJson['name'] ?? 'Unknown Subtask',
+            description: subtaskJson['description'] ?? 'No Description',
+            date: date,
+            time: time,
+            type: 'Scheduled',
+            isCompleted: subtaskJson['done'] == true,
+            completionDate: subtaskJson['done'] == true
+                ? DateFormat('MM/dd/yyyy').format(DateTime.now())
+                : null,
+            isGoalSubtask: true,
+            goalSubtaskId: subtaskJson['id'].toString(),
+          );
+        }).toList());
+      } else {
+        errorMessage.value = subtaskResponse['message'] ?? 'Failed to fetch goal subtasks';
+        _logger.w('Error fetching goal subtasks: ${errorMessage.value}');
+      }
+
+      if (errorMessage.value.isNotEmpty) {
         SnackbarHelper.showErrorSnackbar(errorMessage.value);
       }
+
+      syncWithCalendarController();
     } catch (e) {
       errorMessage.value = 'An unexpected error occurred: $e';
       _logger.e('Unexpected error in fetchScheduledTasks: $e');
@@ -96,39 +157,69 @@ class ScheduleTaskController extends GetxController {
     try {
       taskLoading[taskId] = true;
       taskLoading.refresh();
-      final response = await apiService.markTaskComplete(taskId);
-      _logger.d('Mark Task Complete response for task $taskId: ${response.toString()}');
 
-      if (response['success']) {
-        final index = scheduledTasks.indexWhere((task) => task.id == taskId);
-        if (index != -1) {
-          final completionDate = response['data']['completed_on'] != null
-              ? DateFormat('MM/dd/yyyy')
-              .format(DateTime.parse(response['data']['completed_on']).toLocal())
-              : DateFormat('MM/dd/yyyy').format(DateTime.now());
-          scheduledTasks[index] = Task(
-            id: scheduledTasks[index].id,
-            title: scheduledTasks[index].title,
-            description: scheduledTasks[index].description,
-            date: scheduledTasks[index].date,
-            time: scheduledTasks[index].time,
-            type: scheduledTasks[index].type,
-            isCompleted: true,
-            completionDate: completionDate,
-          );
-          syncWithCalendarController();
-          scheduledTasks.refresh();
-          _logger.i('Marked task $taskId as complete');
-        } else {
-          _logger.w('Task with id $taskId not found in scheduledTasks');
-          return {
-            'success': false,
-            'message': 'Task not found',
-          };
+      final task = scheduledTasks.firstWhere((t) => t.id == taskId, orElse: () => Task(
+        id: taskId,
+        title: '',
+        description: '',
+        date: '',
+        time: '',
+        type: 'Scheduled',
+        isCompleted: false,
+      ));
+
+      Map<String, dynamic> response;
+
+      if (task.isGoalSubtask) {
+        response = await apiService.updateSubtask(taskId, {'recurring': 1});
+        _logger.d('Mark Subtask Complete response for subtask $taskId: $response');
+        if (response['success']) {
+          final index = scheduledTasks.indexWhere((t) => t.id == taskId);
+          if (index != -1) {
+            scheduledTasks[index] = Task(
+              id: scheduledTasks[index].id,
+              title: scheduledTasks[index].title,
+              description: scheduledTasks[index].description,
+              date: scheduledTasks[index].date,
+              time: scheduledTasks[index].time,
+              type: scheduledTasks[index].type,
+              isCompleted: response['subtask']['progress'] >= 100.0,
+              completionDate: DateFormat('MM/dd/yyyy').format(DateTime.now()),
+              isGoalSubtask: true,
+              goalSubtaskId: taskId,
+            );
+          }
         }
       } else {
+        response = await apiService.markTaskComplete(taskId);
+        _logger.d('Mark Task Complete response for task $taskId: $response');
+        if (response['success']) {
+          final index = scheduledTasks.indexWhere((t) => t.id == taskId);
+          if (index != -1) {
+            final completionDate = response['data']['completed_on'] != null
+                ? DateFormat('MM/dd/yyyy').format(DateTime.parse(response['data']['completed_on']).toLocal())
+                : DateFormat('MM/dd/yyyy').format(DateTime.now());
+            scheduledTasks[index] = Task(
+              id: scheduledTasks[index].id,
+              title: scheduledTasks[index].title,
+              description: scheduledTasks[index].description,
+              date: scheduledTasks[index].date,
+              time: scheduledTasks[index].time,
+              type: scheduledTasks[index].type,
+              isCompleted: true,
+              completionDate: completionDate,
+            );
+          }
+        }
+      }
+
+      if (response['success']) {
+        syncWithCalendarController();
+        scheduledTasks.refresh();
+        _logger.i('Marked task/subtask $taskId as complete');
+      } else {
         errorMessage.value = response['message'] ?? 'Failed to mark task as complete';
-        _logger.w('Error marking task $taskId: ${errorMessage.value}');
+        _logger.w('Error marking task/subtask $taskId: ${errorMessage.value}');
       }
       return response;
     } catch (e) {
@@ -149,26 +240,33 @@ class ScheduleTaskController extends GetxController {
       taskLoading[taskId] = true;
       taskLoading.refresh();
 
-      final response = await apiService.deleteTask(taskId);
+      final task = scheduledTasks.firstWhere((t) => t.id == taskId, orElse: () => Task(
+        id: taskId,
+        title: '',
+        description: '',
+        date: '',
+        time: '',
+        type: 'Scheduled',
+        isCompleted: false,
+      ));
 
+      if (task.isGoalSubtask) {
+        _logger.w('Cannot cancel goal subtask $taskId');
+        return {
+          'success': false,
+          'message': 'Goal subtasks cannot be canceled',
+        };
+      }
+
+      final response = await apiService.deleteTask(taskId);
       if (response['success']) {
         _logger.i('Task $taskId deleted successfully');
         scheduledTasks.removeWhere((task) => task.id == taskId);
         scheduledTasks.refresh();
-
-        // Sync with CalendarController
-        final calendarController = Get.find<CalendarController>();
         calendarController.tasks.removeWhere((task) => task.id == taskId);
         calendarController.saveTasks();
-
-        return {'success': true};
-      } else {
-        _logger.e('Failed to delete task: ${response['message']}');
-        return {
-          'success': false,
-          'message': response['message'] ?? 'Failed to cancel task',
-        };
       }
+      return response;
     } catch (e) {
       _logger.e('Error canceling task: $e');
       return {'success': false, 'message': 'Error canceling task: $e'};
@@ -184,7 +282,7 @@ class ScheduleTaskController extends GetxController {
       return isScheduledTask;
     }).toList();
     _logger.d(
-        'Tasks for date $date: ${tasksForDate.map((t) => 'ID: ${t.id}, Title: ${t.title}, Type: ${t.type}, CompletionDate: ${t.completionDate}').toList()}');
+        'Tasks for date $date: ${tasksForDate.map((t) => 'ID: ${t.id}, Title: ${t.title}, Type: ${t.type}, CompletionDate: ${t.completionDate}, IsGoalSubtask: ${t.isGoalSubtask}').toList()}');
     return tasksForDate;
   }
 }

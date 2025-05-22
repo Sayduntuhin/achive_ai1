@@ -1,18 +1,26 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart' show MediaType;
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import '../view/widgets/snackbar_helper.dart';
 
 class ApiService {
   static const String _baseUrl = 'http://192.168.10.35:5000';
- /* static const String _baseUrl = 'https://4956-115-127-156-9.ngrok-free.app';*/
+  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+
+  /* static const String _baseUrl = 'https://4956-115-127-156-9.ngrok-free.app';*/
   static const int _timeoutSeconds = 30;
   static const int _maxRetries = 2;
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   final Logger _logger = Logger();
   static String get baseUrl => _baseUrl;
+  String? accessToken;
+
   ///----------------------------------------Sign Up----------------------------------------
   Future<Map<String, dynamic>> signUp({
     required String email,
@@ -663,7 +671,80 @@ class ApiService {
       'message': 'Failed to fetch scheduled tasks. Please try again.',
     };
   }
-///----------------------------------------Reschedule Task----------------------------------------
+///----------------------------------------Get Goal Subtasks----------------------------------------
+  Future<Map<String, dynamic>> getGoalSubtasks() async {
+    int attempt = 0;
+    while (attempt < _maxRetries) {
+      try {
+        final accessToken = await _secureStorage.read(key: 'access_token');
+        if (accessToken == null) {
+          _logger.w('No access token found for getGoalSubtasks');
+          return {
+            'success': false,
+            'message': 'No access token found. Please log in.',
+          };
+        }
+
+        final response = await http.get(
+          Uri.parse('$_baseUrl/scheduled_tasks/goal_subtasks/'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+          },
+        ).timeout(Duration(seconds: _timeoutSeconds));
+
+        _logger.i('Get Goal Subtasks API response: ${response.statusCode} ${response.body}');
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return {
+            'success': true,
+            'data': data,
+          };
+        } else {
+          final data = jsonDecode(response.body);
+          String message = 'Failed to fetch goal subtasks';
+          if (data['error'] != null) {
+            message = data['error'];
+          } else if (data['detail'] != null) {
+            message = data['detail'];
+          } else if (data['message'] != null) {
+            message = data['message'];
+          }
+          _logger.w('Get Goal Subtasks failed: $message');
+          return {
+            'success': false,
+            'message': message,
+          };
+        }
+      } on TimeoutException {
+        attempt++;
+        _logger.w('Get Goal Subtasks timeout, attempt $attempt of $_maxRetries');
+        if (attempt >= _maxRetries) {
+          return {
+            'success': false,
+            'message': 'Request timed out. Please try again.',
+          };
+        }
+      } on http.ClientException catch (e) {
+        _logger.e('Network error in getGoalSubtasks: $e');
+        return {
+          'success': false,
+          'message': 'Network error. Please check your connection.',
+        };
+      } catch (e) {
+        _logger.e('Unexpected error in getGoalSubtasks: $e');
+        return {
+          'success': false,
+          'message': 'An unexpected error occurred. Please try again.',
+        };
+      }
+    }
+    return {
+      'success': false,
+      'message': 'Failed to fetch goal subtasks. Please try again.',
+    };
+  }///----------------------------------------Reschedule Task----------------------------------------
   Future<Map<String, dynamic>> rescheduleTask({
     required String taskId,
     required String scheduleTime,
@@ -894,7 +975,6 @@ class ApiService {
   }
 
   ///----------------------------------------Get Subtask----------------------------------------
-  /// Fetches details of a specific subtask by ID.
   Future<Map<String, dynamic>> getSubtask(String subtaskId) async {
     int attempt = 0;
     while (attempt < _maxRetries) {
@@ -970,6 +1050,426 @@ class ApiService {
       'message': 'Failed to fetch subtask. Please try again.',
     };
   }
+  ///----------------------------------------Update Subtask----------------------------------------
+  Future<Map<String, dynamic>> updateSubtask(String id, Map<String, dynamic> data) async {
+    try {
+      final accessToken = await _secureStorage.read(key: 'access_token');
+      if (accessToken == null) {
+        _logger.w('No access token found for getSubtask');
+        return {
+          'success': false,
+          'message': 'No access token found. Please log in.',
+        };
+      }
+      final response = await http.patch(
+        Uri.parse('$baseUrl/goal/subtasks/$id'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json'
 
+        },
+        body: jsonEncode(data),
+      );
+      _logger.d('Update Subtask $id API response: ${response.statusCode} ${response.body}');
+      if (response.statusCode == 200) {
+        return {'success': true, 'subtask': jsonDecode(response.body)};
+      }
+      final error = jsonDecode(response.body);
+      return {'success': false, 'message': error['error'] ?? 'Failed to update subtask: ${response.statusCode}'};
+    } catch (e) {
+      _logger.e('Error updating subtask $id: $e');
+      return {'success': false, 'message': 'Error updating subtask: $e'};
+    }
+  }
+  Future<Map<String, dynamic>> getProfile() async {
+    int attempt = 0;
+    while (attempt < _maxRetries) {
+      try {
+        final accessToken = await _secureStorage.read(key: 'access_token');
+        if (accessToken == null) {
+          _logger.w('No access token found for getProfile');
+          return {
+            'success': false,
+            'message': 'No access token found. Please log in.',
+          };
+        }
 
+        final response = await http.get(
+          Uri.parse('$_baseUrl/accounts/profile/'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+          },
+        ).timeout(Duration(seconds: _timeoutSeconds));
+
+        _logger.i('Get Profile API response: ${response.statusCode} ${response.body}');
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return {
+            'success': true,
+            'data': data,
+          };
+        } else {
+          final data = jsonDecode(response.body);
+          String message = 'Failed to fetch profile';
+          if (data['error'] != null) {
+            message = data['error'];
+          } else if (data['detail'] != null) {
+            message = data['detail'];
+          } else if (data['message'] != null) {
+            message = data['message'];
+          }
+          _logger.w('Get Profile failed: $message');
+          return {
+            'success': false,
+            'message': message,
+          };
+        }
+      } on TimeoutException {
+        attempt++;
+        _logger.w('Get Profile timeout, attempt $attempt of $_maxRetries');
+        if (attempt >= _maxRetries) {
+          return {
+            'success': false,
+            'message': 'Request timed out. Please try again.',
+          };
+        }
+      } on http.ClientException catch (e) {
+        _logger.e('Network error in getProfile: $e');
+        return {
+          'success': false,
+          'message': 'Network error. Please check your connection.',
+        };
+      } catch (e) {
+        _logger.e('Unexpected error in getProfile: $e');
+        return {
+          'success': false,
+          'message': 'An unexpected error occurred. Please try again.',
+        };
+      }
+    }
+    return {
+      'success': false,
+      'message': 'Failed to fetch profile. Please try again.',
+    };
+  }
+
+  // PATCH /accounts/profile/
+  Future<Map<String, dynamic>> updateProfile({
+    String? fullName,
+    String? bio,
+    String? dateOfBirth,
+    File? profileImage,
+  }) async {
+    int attempt = 0;
+    while (attempt < _maxRetries) {
+      try {
+        final accessToken = await _secureStorage.read(key: 'access_token');
+        if (accessToken == null) {
+          _logger.w('No access token found for updateProfile');
+          return {
+            'success': false,
+            'message': 'No access token found. Please log in.',
+          };
+        }
+
+        var request = http.MultipartRequest(
+          'PATCH',
+          Uri.parse('$_baseUrl/accounts/profile/'),
+        );
+
+        // Add headers
+        request.headers['Authorization'] = 'Bearer $accessToken';
+
+        // Add text fields if provided
+        if (fullName != null) request.fields['full_name'] = fullName;
+        if (bio != null) request.fields['bio'] = bio;
+        if (dateOfBirth != null) request.fields['date_of_birth'] = dateOfBirth;
+
+        // Add profile image if provided
+        if (profileImage != null) {
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'profile_image',
+              profileImage.path,
+              contentType: MediaType('image', 'jpeg'),
+            ),
+          );
+        }
+
+        final response = await request.send().timeout(Duration(seconds: _timeoutSeconds));
+        final responseBody = await response.stream.bytesToString();
+
+        _logger.i('Update Profile API response: ${response.statusCode} $responseBody');
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(responseBody);
+          return {
+            'success': true,
+            'data': data,
+          };
+        } else {
+          final data = jsonDecode(responseBody);
+          String message = 'Failed to update profile';
+          if (data['error'] != null) {
+            message = data['error'];
+          } else if (data['detail'] != null) {
+            message = data['detail'];
+          } else if (data['message'] != null) {
+            message = data['message'];
+          }
+          _logger.w('Update Profile failed: $message');
+          return {
+            'success': false,
+            'message': message,
+          };
+        }
+      } on TimeoutException {
+        attempt++;
+        _logger.w('Update Profile timeout, attempt $attempt of $_maxRetries');
+        if (attempt >= _maxRetries) {
+          return {
+            'success': false,
+            'message': 'Request timed out. Please try again.',
+          };
+        }
+      } on http.ClientException catch (e) {
+        _logger.e('Network error in updateProfile: $e');
+        return {
+          'success': false,
+          'message': 'Network error. Please check your connection.',
+        };
+      } catch (e) {
+        _logger.e('Unexpected error in updateProfile: $e');
+        return {
+          'success': false,
+          'message': 'An unexpected error occurred. Please try again.',
+        };
+      }
+    }
+    return {
+      'success': false,
+      'message': 'Failed to update profile. Please try again.',
+    };
+  }
+  ///----------------------------------------Submit Device Token----------------------------------------
+  Future<Map<String, dynamic>> submitDeviceToken(String deviceToken) async {
+    int attempt = 0;
+    while (attempt < _maxRetries) {
+      try {
+        final accessToken = await _secureStorage.read(key: 'access_token');
+        if (accessToken == null) {
+          _logger.w('No access token found for submitDeviceToken');
+          return {
+            'success': false,
+            'message': 'No access token found. Please log in.',
+          };
+        }
+
+        final response = await http.post(
+          Uri.parse('$_baseUrl/accounts/submit_device_token/'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+          },
+          body: jsonEncode({'device_token': deviceToken}),
+        ).timeout(Duration(seconds: _timeoutSeconds));
+
+        _logger.i('Submit Device Token API response: ${response.statusCode} ${response.body}');
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          return {'success': true};
+        } else {
+          final data = jsonDecode(response.body);
+          String message = 'Failed to submit device token';
+          if (data['error'] != null) {
+            message = data['error'];
+          } else if (data['detail'] != null) {
+            message = data['detail'];
+          } else if (data['message'] != null) {
+            message = data['message'];
+          }
+          _logger.w('Submit Device Token failed: $message');
+          return {
+            'success': false,
+            'message': message,
+          };
+        }
+      } on TimeoutException {
+        attempt++;
+        _logger.w('Submit Device Token timeout, attempt $attempt of $_maxRetries');
+        if (attempt >= _maxRetries) {
+          return {
+            'success': false,
+            'message': 'Request timed out. Please try again.',
+          };
+        }
+      } on http.ClientException catch (e) {
+        _logger.e('Network error in submitDeviceToken: $e');
+        return {
+          'success': false,
+          'message': 'Network error. Please check your connection.',
+        };
+      } catch (e) {
+        _logger.e('Unexpected error in submitDeviceToken: $e');
+        return {
+          'success': false,
+          'message': 'An unexpected error occurred. Please try again.',
+        };
+      }
+    }
+    return {
+      'success': false,
+      'message': 'Failed to submit device token. Please try again.',
+    };
+  }
+  ///----------------------------------------Get Notifications----------------------------------------
+  Future<Map<String, dynamic>> getNotifications() async {
+    int attempt = 0;
+    while (attempt < _maxRetries) {
+      try {
+        final accessToken = await _secureStorage.read(key: 'access_token');
+        if (accessToken == null) {
+          _logger.w('No access token found for getNotifications');
+          return {
+            'success': false,
+            'message': 'No access token found. Please log in.',
+          };
+        }
+
+        final response = await http.get(
+          Uri.parse('$_baseUrl/notification/list/'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+          },
+        ).timeout(Duration(seconds: _timeoutSeconds));
+
+        _logger.i('Get Notifications API response: ${response.statusCode} ${response.body}');
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return {
+            'success': true,
+            'data': data,
+          };
+        } else {
+          final data = jsonDecode(response.body);
+          String message = 'Failed to fetch notifications';
+          if (data['error'] != null) {
+            message = data['error'];
+          } else if (data['detail'] != null) {
+            message = data['detail'];
+          } else if (data['message'] != null) {
+            message = data['message'];
+          }
+          _logger.w('Get Notifications failed: $message');
+          return {
+            'success': false,
+            'message': message,
+          };
+        }
+      } on TimeoutException {
+        attempt++;
+        _logger.w('Get Notifications timeout, attempt $attempt of $_maxRetries');
+        if (attempt >= _maxRetries) {
+          return {
+            'success': false,
+            'message': 'Request timed out. Please try again.',
+          };
+        }
+      } on http.ClientException catch (e) {
+        _logger.e('Network error in getNotifications: $e');
+        return {
+          'success': false,
+          'message': 'Network error. Please check your connection.',
+        };
+      } catch (e) {
+        _logger.e('Unexpected error in getNotifications: $e');
+        return {
+          'success': false,
+          'message': 'An unexpected error occurred. Please try again.',
+        };
+      }
+    }
+    return {
+      'success': false,
+      'message': 'Failed to fetch notifications. Please try again.',
+    };
+  }
+  ///----------------------------------------Mark Notification as Read----------------------------------------
+  Future<Map<String, dynamic>> markNotificationAsRead(String notificationId) async {
+    int attempt = 0;
+    while (attempt < _maxRetries) {
+      try {
+        final accessToken = await _secureStorage.read(key: 'access_token');
+        if (accessToken == null) {
+          _logger.w('No access token found for markNotificationAsRead');
+          return {
+            'success': false,
+            'message': 'No access token found. Please log in.',
+          };
+        }
+
+        final response = await http.patch(
+          Uri.parse('$_baseUrl/notification/$notificationId/mark_as_read/'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+          },
+        ).timeout(Duration(seconds: _timeoutSeconds));
+
+        _logger.i('Mark Notification as Read API response: ${response.statusCode} ${response.body}');
+
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          return {
+            'success': true,
+            'message': 'Notification marked as read',
+          };
+        } else {
+          final data = jsonDecode(response.body);
+          String message = 'Failed to mark notification as read';
+          if (data['error'] != null) {
+            message = data['error'];
+          } else if (data['detail'] != null) {
+            message = data['detail'];
+          } else if (data['message'] != null) {
+            message = data['message'];
+          }
+          _logger.w('Mark Notification as Read failed: $message');
+          return {
+            'success': false,
+            'message': message,
+          };
+        }
+      } on TimeoutException {
+        attempt++;
+        _logger.w('Mark Notification as Read timeout, attempt $attempt of $_maxRetries');
+        if (attempt >= _maxRetries) {
+          return {
+            'success': false,
+            'message': 'Request timed out. Please try again.',
+          };
+        }
+      } on http.ClientException catch (e) {
+        _logger.e('Network error in markNotificationAsRead: $e');
+        return {
+          'success': false,
+          'message': 'Network error. Please check your connection.',
+        };
+      } catch (e) {
+        _logger.e('Unexpected error in markNotificationAsRead: $e');
+        return {
+          'success': false,
+          'message': 'An unexpected error occurred. Please try again.',
+        };
+      }
+    }
+    return {
+      'success': false,
+      'message': 'Failed to mark notification as read. Please try again.',
+    };
+  }
 }
+

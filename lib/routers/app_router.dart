@@ -5,6 +5,7 @@ import 'package:achive_ai/view/forgetPassword/pages/reset_password_page.dart';
 import 'package:achive_ai/view/login/pages/log_in_page.dart';
 import 'package:achive_ai/view/main/page/main_pages.dart';
 import 'package:achive_ai/view/missed_task/page/missed_task.dart';
+import 'package:achive_ai/view/notification/page/notification_page.dart';
 import 'package:achive_ai/view/setting/pages/help_&_support.dart';
 import 'package:achive_ai/view/setting/pages/manage_sub_page.dart';
 import 'package:achive_ai/view/setting/pages/privacy_policy.dart';
@@ -35,6 +36,7 @@ class Routes {
   static const String upgradePlan = "/upgradePlan";
   static const String missedTask = "/missedTask";
   static const String viewTask = "/viewTask";
+  static const String notification = "/notification";
 
 }
 
@@ -55,6 +57,7 @@ class AppPages {
     GetPage(name: Routes.mainPage, page: () => MainScreen(), transition: Transition.fadeIn),
     GetPage(name: Routes.missedTask, page: () => MissedTaskPage(), transition: Transition.fadeIn),
     GetPage(name: Routes.viewTask, page: () => ViewTaskPage(), transition: Transition.fadeIn),
+    GetPage(name: Routes.notification, page: () => NotificationPage(), transition: Transition.fadeIn),
     //>>>>>>>>>>>>>>>>SettingPage>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     GetPage(name: Routes.manageSubscription, page: () => ManageSubscriptionScreen(), transition: Transition.fadeIn),
     GetPage(name: Routes.personalInfo, page: () => PersonalInformationScreen(), transition: Transition.fadeIn),

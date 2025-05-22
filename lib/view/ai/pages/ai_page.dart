@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import '../../../controller/chat_controller.dart';
+import '../../../controller/profile_controller.dart';
 import '../../../themes/colors.dart';
 import '../widgets/type_indicator.dart';
 
@@ -83,14 +84,7 @@ class _ChatBotScreenState extends State<ChatBotScreen> with TickerProviderStateM
             ],
           ),
 
-          // Add to Goals button
-          Obx(() => _controller.hasConversationEnded.value
-              ? Positioned(
-            left: 20.w,
-            bottom: 80.h,
-            child: _buildAddToGoalsButton(),
-          )
-              : SizedBox.shrink()),
+
         ],
       ),
     );
@@ -134,6 +128,7 @@ class _ChatBotScreenState extends State<ChatBotScreen> with TickerProviderStateM
 
   /// Avatar Widget
   Widget _buildAvatar({required bool isUser}) {
+    final ProfileController controller = Get.find<ProfileController>();
     return Container(
       width: 32.w,
       height: 32.w,
@@ -141,13 +136,20 @@ class _ChatBotScreenState extends State<ChatBotScreen> with TickerProviderStateM
         shape: BoxShape.circle,
         color: isUser ? Colors.grey[300] : Colors.blue[200],
       ),
-      child: Center(
-        child: Image.asset(
-          isUser ? "assets/images/person.png" : "assets/images/ai_avatar.png",
+      child: isUser ? Center(
+        child: CircleAvatar(
+          radius: 20.w,
+          backgroundImage: controller.selectedImage.value != null
+              ? FileImage(controller.selectedImage.value!)
+              : controller.profile.value.profileImage != null
+              ? NetworkImage(controller.profile.value.profileImage!)
+              : const AssetImage("assets/images/empty_person.png") as ImageProvider,
+        ),
+      ) :
+      Image.asset("assets/images/ai_avatar.png",
           width: 32.w,
           height: 32.h,
         ),
-      ),
     );
   }
 

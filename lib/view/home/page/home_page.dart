@@ -1,5 +1,7 @@
+import 'package:achive_ai/controller/profile_controller.dart';
 import 'package:achive_ai/themes/colors.dart';
 import 'package:achive_ai/view/home/widgets/calander.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -13,6 +15,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../api/api_service.dart';
 import '../../../controller/any_time_task_controller.dart';
 import '../../../controller/calander_controller.dart';
+import '../../../controller/notification_controller.dart';
 import '../../../controller/schedule_task_controller.dart';
 import '../../../model/task.dart';
 import '../../widgets/snackbar_helper.dart';
@@ -28,20 +31,26 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _taskNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  String _selectedGoal = "";
-  String _taskType = "Any Time";
+  final Logger _logger = Logger();
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
 
   @override
   void initState() {
     super.initState();
-    Get.put(ApiService());
-    Get.put(CalendarController());
-    Get.put(ScheduleTaskController());
-    Get.put(TaskController());
+    // Initialize controllers (already done in main.dart, just ensure they're available)
+    Get.put(ApiService(), permanent: true);
+    Get.put(CalendarController(), permanent: true);
+    Get.put(ScheduleTaskController(), permanent: true);
+    Get.put(TaskController(), permanent: true);
+    Get.put(NotificationController(), permanent: true);
+    // ProfileController is already permanent in main.dart, no need for Get.put
+    setupFCM();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowDisclaimerDialog();
+      // Trigger fetchProfile on page load
+      final profileController = Get.find<ProfileController>();
+      profileController.fetchProfile();
     });
   }
 
@@ -50,6 +59,42 @@ class _HomePageState extends State<HomePage> {
     _taskNameController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> setupFCM() async {
+    final messaging = FirebaseMessaging.instance;
+
+    final settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+      _logger.w('Notification permissions denied or provisional: ${settings.authorizationStatus}');
+      SnackbarHelper.showErrorSnackbar('Please enable notifications in settings.');
+    } else {
+      _logger.i('Notification permissions granted');
+    }
+
+    final token = await messaging.getToken();
+    if (token != null) {
+      _logger.i('FCM Device Token: $token');
+      final notificationController = Get.find<NotificationController>();
+      await notificationController.submitDeviceToken(token);
+    } else {
+      _logger.w('Failed to retrieve FCM device token');
+    }
+
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      _logger.i('FCM Device Token Refreshed: $newToken');
+      final notificationController = Get.find<NotificationController>();
+      notificationController.submitDeviceToken(newToken);
+    });
   }
 
   Future<void> _checkAndShowDisclaimerDialog() async {
@@ -160,6 +205,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
   void _showCompletionDialog(String taskTitle) {
     showDialog(
       context: context,
@@ -237,6 +283,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
   Widget _bulletPoint(String text) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,7 +304,6 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
-
 
   void _openTaskDialog() {
     final calendarController = Get.find<CalendarController>();
@@ -295,7 +341,7 @@ class _HomePageState extends State<HomePage> {
                           style: TextStyle(
                             fontSize: 24.sp,
                             fontWeight: FontWeight.w500,
-                            color: textColor, // Changed from primaryColor
+                            color: textColor,
                             fontFamily: 'Poppins',
                           ),
                         ),
@@ -406,7 +452,7 @@ class _HomePageState extends State<HomePage> {
                                               .formatDate(_selectedDate!)
                                               : "mm/dd/yy",
                                           hintStyle:
-                                          TextStyle(color:primaryColor),
+                                          TextStyle(color: primaryColor),
                                           suffixIcon: Icon(Icons.calendar_today,
                                               color: primaryColor, size: 20.sp),
                                         ),
@@ -636,82 +682,144 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
   Widget _buildHeader() {
+    final ProfileController controller = Get.find<ProfileController>();
+    final NotificationController notificationController = Get.find<NotificationController>();
+
     return Padding(
       padding: EdgeInsets.only(top: 0.01.sh),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          CircleAvatar(
-            backgroundImage: AssetImage("assets/images/person.png"),
-            radius: 20.w,
-          ),
-          SizedBox(width: 10.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Obx(
+            () => controller.isLoading.value || notificationController.isLoading.value
+            ? Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "Hello Joshitha",
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: textColor,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Philosopher',
+              CircleAvatar(
+                radius: 20.w,
+                backgroundColor: Colors.white,
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 100.w,
+                      height: 16.h,
+                      color: Colors.white,
+                    ),
+                    SizedBox(height: 4.h),
+                    Container(
+                      width: 150.w,
+                      height: 12.h,
+                      color: Colors.white,
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                "I am worth of love and respect",
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.white70,
-                  fontFamily: 'Poppins',
-                ),
+              Container(
+                width: 25.w,
+                height: 25.h,
+                color: Colors.white,
               ),
             ],
           ),
-          Spacer(),
-          SvgPicture.asset(
-            "assets/svg/calander.svg",
-            width: 25.w,
-            height: 25.h,
-            colorFilter: ColorFilter.mode(
-              primaryColor,
-              BlendMode.srcIn,
+        )
+            : Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            GestureDetector(
+              onTap: () => Get.toNamed('/personalInfo'),
+              child: CircleAvatar(
+                radius: 20.w,
+                backgroundImage: controller.selectedImage.value != null
+                    ? FileImage(controller.selectedImage.value!)
+                    : controller.profile.value.profileImage != null
+                    ? NetworkImage(controller.profile.value.profileImage!)
+                    : const AssetImage("assets/images/empty_person.png") as ImageProvider,
+              ),
             ),
-          ),
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(Icons.notifications_none_outlined,
-                  color: primaryColor, size: 25.sp),
-              Positioned(
-                right: -1,
-                top: -4,
-                child: Container(
-                  padding: EdgeInsets.all(4.w),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    controller.profile.value.fullName?.isEmpty ?? true
+                        ? "User"
+                        : controller.profile.value.fullName!,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: textColor,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Philosopher',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  constraints: BoxConstraints(
-                    minWidth: 12.w,
-                    minHeight: 12.w,
+                  Text(
+                    controller.profile.value.bio?.isEmpty ?? true
+                        ? "No Bio"
+                        : controller.profile.value.bio!,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.white70,
+                      fontFamily: 'Poppins',
+                    ),
                   ),
-                  child: Center(
-                    child: Text(
-                      "3",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.bold,
+                ],
+              ),
+            ),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.notifications_none_outlined,
+                    color: primaryColor,
+                    size: 25.sp,
+                  ),
+                  onPressed: () {
+                    Get.toNamed('/notification');
+                    // Optionally mark all as read when opening notifications
+                    // if (notificationController.unreadCount.value > 0) {
+                    //   notificationController.markAllAsRead();
+                    // }
+                  },
+                ),
+                if (notificationController.unreadCount.value > 0)
+                  Positioned(
+                    right: -1,
+                    top: -4,
+                    child: Container(
+                      padding: EdgeInsets.all(4.w),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: BoxConstraints(
+                        minWidth: 12.w,
+                        minHeight: 12.w,
+                      ),
+                      child: Center(
+                        child: Text(
+                          notificationController.unreadCount.value.toString(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -785,7 +893,6 @@ class _HomePageState extends State<HomePage> {
   Widget _buildAnyTimeTasks() {
     final taskController = Get.find<TaskController>();
     final calendarController = Get.find<CalendarController>();
-    final Logger _logger = Logger();
     return Obx(() {
       final selectedDate =
       calendarController.formatDate(calendarController.selectedDay.value);
@@ -903,7 +1010,7 @@ class _HomePageState extends State<HomePage> {
           AnimatedContainer(
             duration: Duration(milliseconds: 300),
             width: 10.w,
-            height: 0.1.sh,
+            height: 0.12.sh,
             margin: EdgeInsets.only(bottom: 10.h),
             decoration: BoxDecoration(
               color: task.isCompleted ? greenColor : Colors.transparent,
@@ -922,7 +1029,7 @@ class _HomePageState extends State<HomePage> {
               duration: Duration(milliseconds: 300),
               padding: EdgeInsets.all(16.w),
               margin: EdgeInsets.only(bottom: 10.h),
-              height: 0.1.sh,
+              height: 0.12.sh,
               decoration: BoxDecoration(
                 color: task.isCompleted ? Colors.transparent : buttonColor,
                 borderRadius: BorderRadius.only(
@@ -930,8 +1037,7 @@ class _HomePageState extends State<HomePage> {
                   bottomRight: Radius.circular(12.r),
                 ),
                 border: Border.all(
-                  color:
-                  task.isCompleted ? greenColor : Colors.transparent,
+                  color: task.isCompleted ? greenColor : Colors.transparent,
                   width: 1,
                 ),
               ),
@@ -983,6 +1089,8 @@ class _HomePageState extends State<HomePage> {
                           height: 0.035.sh,
                           child: Text(
                             task.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w700,
@@ -1160,7 +1268,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -1172,7 +1280,7 @@ class _HomePageState extends State<HomePage> {
     final Logger _logger = Logger();
     return Obx(() {
       final selectedDate =
-          calendarController.formatDate(calendarController.selectedDay.value);
+      calendarController.formatDate(calendarController.selectedDay.value);
       _logger.d('Building Today Schedule for date: $selectedDate');
       final tasks = scheduleController.getTasksForDate(selectedDate);
 
@@ -1183,7 +1291,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             TitleWithViewAll(
               title:
-                  "${isSameDay(calendarController.selectedDay.value, DateTime.now()) ? 'Today\'s' : calendarController.formatDate(calendarController.selectedDay.value)} Schedule",
+              "${isSameDay(calendarController.selectedDay.value, DateTime.now()) ? 'Today\'s' : calendarController.formatDate(calendarController.selectedDay.value)} Schedule",
               showViewAll: false,
             ),
             SizedBox(height: 10.h),
@@ -1205,7 +1313,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             TitleWithViewAll(
               title:
-                  "${isSameDay(calendarController.selectedDay.value, DateTime.now()) ? 'Today\'s' : calendarController.formatDate(calendarController.selectedDay.value)} Schedule",
+              "${isSameDay(calendarController.selectedDay.value, DateTime.now()) ? 'Today\'s' : calendarController.formatDate(calendarController.selectedDay.value)} Schedule",
               showViewAll: false,
             ),
             SizedBox(height: 10.h),
@@ -1224,14 +1332,14 @@ class _HomePageState extends State<HomePage> {
         children: [
           TitleWithViewAll(
             title:
-                "${isSameDay(calendarController.selectedDay.value, DateTime.now()) ? 'Today\'s' : calendarController.formatDate(calendarController.selectedDay.value)} Schedule",
+            "${isSameDay(calendarController.selectedDay.value, DateTime.now()) ? 'Today\'s' : calendarController.formatDate(calendarController.selectedDay.value)} Schedule",
             showViewAll: false,
           ),
           SizedBox(height: 10.h),
           ...tasks.map((task) => _buildScheduleCard(
-                task: task,
-                showOptions: !task.isCompleted,
-              )),
+            task: task,
+            showOptions: !task.isCompleted,
+          )),
         ],
       );
     });
@@ -1246,7 +1354,7 @@ class _HomePageState extends State<HomePage> {
     _logger.d(
         'Rendering schedule card for goal ${task.id}: ${task.title}, date=${task.date}, time=${task.time}');
     return GestureDetector(
-      onTap: () async{
+      onTap: () async {
         final response = await scheduleController.markTaskComplete(task.id);
         if (response['success']) {
           _showCompletionDialog(task.title);
@@ -1256,7 +1364,6 @@ class _HomePageState extends State<HomePage> {
         }
         _logger.d('Marking goal ${task.id} as complete');
         scheduleController.markTaskComplete(task.id);
-
       },
       child: Row(
         children: [
@@ -1274,16 +1381,16 @@ class _HomePageState extends State<HomePage> {
           AnimatedContainer(
             duration: Duration(milliseconds: 300),
             width: 10.w,
-            height: 0.09.sh,
+            height: 0.12.sh,
             margin: EdgeInsets.only(bottom: 10.h),
             decoration: BoxDecoration(
-              color: task.isCompleted ? greenColor: Colors.transparent,
+              color: task.isCompleted ? greenColor : Colors.transparent,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12.r),
                 bottomLeft: Radius.circular(12.r),
               ),
               border: Border.all(
-                color: task.isCompleted ? greenColor: buttonColor,
+                color: task.isCompleted ? greenColor : buttonColor,
                 width: 1,
               ),
             ),
@@ -1293,7 +1400,7 @@ class _HomePageState extends State<HomePage> {
               duration: Duration(milliseconds: 300),
               padding: EdgeInsets.all(10.w),
               margin: EdgeInsets.only(bottom: 10.h),
-              height: 0.09.sh,
+              height: 0.12.sh,
               decoration: BoxDecoration(
                 color: task.isCompleted ? Colors.transparent : buttonColor,
                 borderRadius: BorderRadius.only(
@@ -1301,8 +1408,7 @@ class _HomePageState extends State<HomePage> {
                   bottomRight: Radius.circular(12.r),
                 ),
                 border: Border.all(
-                  color:
-                      task.isCompleted ? greenColor: Colors.transparent,
+                  color: task.isCompleted ? greenColor : Colors.transparent,
                   width: 1,
                 ),
               ),
@@ -1329,7 +1435,7 @@ class _HomePageState extends State<HomePage> {
                         duration: Duration(milliseconds: 200),
                         opacity: task.isCompleted ? 1.0 : 0.0,
                         child:
-                            Icon(Icons.check, color: Colors.white, size: 16.sp),
+                        Icon(Icons.check, color: Colors.white, size: 16.sp),
                       ),
                     ),
                   ),
@@ -1340,10 +1446,11 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SizedBox(
-                          width: 1.sw,
-                          height: 0.03.sh,
+                          height: 0.06.sh,
                           child: Text(
                             task.title,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
                             style: TextStyle(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w700,
@@ -1353,6 +1460,7 @@ class _HomePageState extends State<HomePage> {
                               fontFamily: 'Philosopher',
                             ),
                           ),
+
                         ),
                         Text(
                           task.description,
