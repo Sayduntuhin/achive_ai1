@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1019470129401",
+    "project_id": "my-perfect-life-ai",
+    "storage_bucket": "my-perfect-life-ai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019470129401:android:9dceceb3dbf55605889a28",
+        "android_client_info": {
+          "package_name": "com.jvai.com.achive_ai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1019470129401-ddlpcs2dptmcoivmuqn0eet9nhci7m8k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jvai.com.achive_ai",
+            "certificate_hash": "d650586a32f15d747ccf5d8a819dada9b678576a"
+          }
+        },
+        {
+          "client_id": "1019470129401-if7dbjj4igq8oju4q495u4sehusaq4jt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKN28esZDqFEoFv-9rfKojG2O3ZBl9tXI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1019470129401-if7dbjj4igq8oju4q495u4sehusaq4jt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1019470129401-6inhlvu8fkdir7cvl97et3028lrojj20.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.jvai.com.achiveAi"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
